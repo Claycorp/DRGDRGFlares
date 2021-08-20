@@ -1,0 +1,16 @@
+{
+  "drgflares.key.throwflare": "Throw Flare Key",
+  "drgflares.config.noSourceDecayTime": "How fast in ticks light sources with no entity are removed. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
+  "drgflares.config.flareQuantity": "How many flares a single player can hold.",
+  "drgflares.config.flareReplenishTime": "Time it takes for a flare to be replenished back to the pile. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
+  "drgflares.config.flareReplenishQuantity": "How many flares are replenished per replenish cycle.",
+  "drgflares.config.lightDecayTime": "How long in ticks light sources will last. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
+  "drgflares.config.entityDecayTime": "How long in ticks until the entity will despawn after the light has gone out. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
+  "drgflares.config.flareLightLevel": "Light level the flares provide 1-16.",
+  "drgflares.config.bounceModifier": "Bounce dampening modifier. Higher numbers = less bounce.",
+  "drgflares.config.flareGravity": "How much movement is removed from the entity over time in the Y direction. AKA GRAVITY! Higher = thicc flares",
+  "drgflares.config.hitEntityGlows": "If the thrown flare hits an entity, it will break and make them glow.",
+  "drgflares.config.lightBlockDebug": "If for whatever reason you are having issues with the invisible lights doing odd stuff enable this to see them.",
+  "drgflares.config.displayFlareCount": "Display the count of flares currently stored on the player in the HUD.",
+  "drgflares.config.makeNoiseWhenThrown": "If flares make a noise when thrown."
+}
