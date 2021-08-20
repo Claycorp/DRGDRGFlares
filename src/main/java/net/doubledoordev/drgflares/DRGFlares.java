@@ -99,7 +99,7 @@ public class DRGFlares
     public void playerJoin(EntityJoinWorldEvent event)
     {
         // need this to sync flare data on join or the client is stupid and displays max.
-        if (event.getEntity() instanceof PlayerEntity)
+        if (!event.getWorld().isClientSide && event.getEntity() instanceof PlayerEntity)
         {
             PlayerEntity player = (PlayerEntity) event.getEntity();
             player.getCapability(FlareProvider.FLARE_CAP_CAPABILITY).ifPresent(flareCap -> {
