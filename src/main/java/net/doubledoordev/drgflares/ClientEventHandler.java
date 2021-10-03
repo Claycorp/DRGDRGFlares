@@ -1,5 +1,10 @@
 package net.doubledoordev.drgflares;
 
+import net.doubledoordev.drgflares.entity.EntityRegistry;
+import net.minecraft.client.renderer.entity.SpriteRenderer;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
@@ -21,7 +26,7 @@ import net.doubledoordev.drgflares.capability.FlareProvider;
 import net.doubledoordev.drgflares.networking.PacketHandler;
 import net.doubledoordev.drgflares.networking.ThrowFlarePacket;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientEventHandler
 {
     // Keybind for Flares
@@ -35,6 +40,8 @@ public class ClientEventHandler
     @SubscribeEvent
     public static void clientRendering(FMLClientSetupEvent event)
     {
+        ClientRegistry.registerKeyBinding(THROW_FLARE);
+        RenderingRegistry.registerEntityRenderingHandler(EntityRegistry.FLARE_ENTITY.get(), manager -> new SpriteRenderer<>(event.getMinecraftSupplier().get().getEntityRenderDispatcher(), event.getMinecraftSupplier().get().getItemRenderer()));
         DeferredWorkQueue.runLater(() -> RenderTypeLookup.setRenderLayer(BlockRegistry.FAKE_LIGHT.get(), RenderType.cutout()));
     }
 
