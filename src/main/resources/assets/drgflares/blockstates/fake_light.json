@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "drgflares:block/fakelightblock"
+      "model": "drgflares:block/fake_light"
     }
   }
 }
