@@ -30,6 +30,7 @@ import net.doubledoordev.drgflares.networking.PacketHandler;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("drgflares")
+@Mod.EventBusSubscriber
 public class DRGFlares
 {
     // Directly reference a log4j logger.
@@ -61,7 +62,7 @@ public class DRGFlares
 
     // Attaches the Flare capability to the player.
     @SubscribeEvent
-    public void attachFlareCapability(AttachCapabilitiesEvent<Entity> event)
+    public static void attachFlareCapability(AttachCapabilitiesEvent<Entity> event)
     {
         if (event.getObject() instanceof PlayerEntity)
         {
@@ -70,7 +71,7 @@ public class DRGFlares
     }
 
     @SubscribeEvent
-    public void playerTick(TickEvent.PlayerTickEvent event)
+    public static void playerTick(TickEvent.PlayerTickEvent event)
     {
         if (event.side.isServer())
             event.player.getCapability(FlareProvider.FLARE_CAP_CAPABILITY).ifPresent(flareCap -> {
@@ -89,7 +90,7 @@ public class DRGFlares
     }
 
     @SubscribeEvent
-    public void playerJoin(EntityJoinWorldEvent event)
+    public static void playerJoin(EntityJoinWorldEvent event)
     {
         // need this to sync flare data on join or the client is stupid and displays max.
         if (!event.getWorld().isClientSide && event.getEntity() instanceof PlayerEntity)
