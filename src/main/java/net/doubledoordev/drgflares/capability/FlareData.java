@@ -17,6 +17,7 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
 
     private int storedFlares;
     private int replenishTickCounter;
+    private int flareThrowCoolDown;
 
     public FlareData()
     {
@@ -48,12 +49,28 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
         replenishTickCounter++;
     }
 
+    public int getFlareThrowCoolDown()
+    {
+        return flareThrowCoolDown;
+    }
+
+    public void setFlareThrowCoolDown(int flareThrowCoolDown)
+    {
+        this.flareThrowCoolDown = flareThrowCoolDown;
+    }
+
+    public void decrementFlareThrowCoolDown()
+    {
+        flareThrowCoolDown--;
+    }
+
     @Override
     public CompoundNBT serializeNBT()
     {
         CompoundNBT compoundNBT = new CompoundNBT();
         compoundNBT.putInt("flareCount", getStoredFlares());
         compoundNBT.putInt("replenishTickCounter", getReplenishTickCounter());
+        compoundNBT.putInt("throwCoolDown", getFlareThrowCoolDown());
         return compoundNBT;
     }
 
@@ -62,6 +79,7 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
     {
         setStoredFlares(nbt.getInt("flareCount"));
         setReplenishTickCounter(nbt.getInt("replenishTickCounter"));
+        setFlareThrowCoolDown(nbt.getInt("throwCoolDown"));
     }
 
     /**

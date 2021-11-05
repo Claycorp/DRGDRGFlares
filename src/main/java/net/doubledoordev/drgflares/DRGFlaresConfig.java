@@ -25,6 +25,7 @@ public class DRGFlaresConfig
         public ForgeConfigSpec.IntValue flareReplenishQuantity;
         public ForgeConfigSpec.IntValue flareLightLevel;
         public ForgeConfigSpec.IntValue entityGlowingTime;
+        public ForgeConfigSpec.IntValue flareThrowCoolDown;
 
         public ForgeConfigSpec.DoubleValue bounceModifier;
         public ForgeConfigSpec.DoubleValue flareGravity;
@@ -33,6 +34,8 @@ public class DRGFlaresConfig
         public ForgeConfigSpec.BooleanValue lightBlockDebug;
         public ForgeConfigSpec.BooleanValue displayFlareCount;
         public ForgeConfigSpec.BooleanValue makeNoiseWhenThrown;
+        public ForgeConfigSpec.BooleanValue spectatorsThrowFlares;
+        public ForgeConfigSpec.BooleanValue spectatorsRequiredToGenerateFlares;
 
         General(ForgeConfigSpec.Builder builder)
         {
@@ -57,14 +60,27 @@ public class DRGFlaresConfig
             displayFlareCount = builder
                     .comment("Display the count of flares currently stored on the player in the HUD.")
                     .translation("drgflares.config.displayFlareCount")
-                    .worldRestart()
                     .define("displayFlareCount", true);
 
             makeNoiseWhenThrown = builder
                     .comment("If flares make a noise when thrown.")
                     .translation("drgflares.config.makeNoiseWhenThrown")
-                    .worldRestart()
                     .define("makeNoiseWhenThrown", true);
+
+            flareThrowCoolDown = builder
+                    .comment("Time it takes before you can throw another flare. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour")
+                    .translation("drgflares.config.flareThrowCoolDown")
+                    .defineInRange("flareThrowCoolDown", 5, 1, Integer.MAX_VALUE);
+
+            spectatorsThrowFlares = builder
+                    .comment("Can spectators throw flares?")
+                    .translation("drgflares.config.spectatorsThrowFlares")
+                    .define("spectatorsThrowFlares", true);
+
+            spectatorsRequiredToGenerateFlares = builder
+                    .comment("Are spectators required to generate flares to throw them like a regular player?")
+                    .translation("drgflares.config.spectatorsRequiredToGenerateFlares")
+                    .define("spectatorsRequiredToGenerateFlares", true);
 
             builder.pop();
             builder.comment("Flare lighting settings")

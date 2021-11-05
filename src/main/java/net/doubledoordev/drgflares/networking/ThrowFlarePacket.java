@@ -26,7 +26,18 @@ public class ThrowFlarePacket
             if (!world.isClientSide)
             {
                 player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
-                    if (flareCap.getStoredFlares() > 0)
+
+                    if (player.isCreative() || (player.isSpectator() && DRGFlaresConfig.GENERAL.spectatorsThrowFlares.get() && !DRGFlaresConfig.GENERAL.spectatorsRequiredToGenerateFlares.get()))
+                    {
+                        if (DRGFlaresConfig.GENERAL.makeNoiseWhenThrown.get())
+                            world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundCategory.PLAYERS, 0.5F, 0.4F / world.getRandom().nextFloat() * 0.4F + 0.8F);
+                        FlareEntity flareEntity = new FlareEntity(world, player);
+                        flareEntity.shootFromRotation(player, player.xRot, player.yRot, 0.0F, 1.5F, 1.0F);
+                        world.addFreshEntity(flareEntity);
+                        return;
+                    }
+
+                    if (flareCap.getStoredFlares() > 0 && flareCap.getFlareThrowCoolDown() == 0)
                     {
                         if (DRGFlaresConfig.GENERAL.makeNoiseWhenThrown.get())
                             world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundCategory.PLAYERS, 0.5F, 0.4F / world.getRandom().nextFloat() * 0.4F + 0.8F);
@@ -34,7 +45,10 @@ public class ThrowFlarePacket
                         flareEntity.shootFromRotation(player, player.xRot, player.yRot, 0.0F, 1.5F, 1.0F);
                         world.addFreshEntity(flareEntity);
                         if (!player.isCreative())
+                        {
                             flareCap.setStoredFlares(flareCap.getStoredFlares() - 1);
+                            flareCap.setFlareThrowCoolDown(DRGFlaresConfig.GENERAL.flareThrowCoolDown.get());
+                        }
                         PacketHandler.send(PacketDistributor.PLAYER.with(context::getSender), new FlareCountSyncPacket(flareCap.getStoredFlares()));
                     }
                 });

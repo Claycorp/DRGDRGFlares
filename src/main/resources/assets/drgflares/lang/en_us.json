@@ -13,5 +13,7 @@
   "drgflares.config.lightBlockDebug": "If for whatever reason you are having issues with the invisible lights doing odd stuff enable this to see them.",
   "drgflares.config.displayFlareCount": "Display the count of flares currently stored on the player in the HUD.",
   "drgflares.config.makeNoiseWhenThrown": "If flares make a noise when thrown.",
-  "drgflares.config.entityGlowingTime": "How long flares cause entities to glow when hit."
+  "drgflares.config.entityGlowingTime": "How long flares cause entities to glow when hit.",
+  "drgflares.config.spectatorsThrowFlares": "If spectators can throw flares.",
+  "drgflares.config.spectatorsRequiredToGenerateFlares": "If spectators need to generate flares to throw them like a regular player."
 }

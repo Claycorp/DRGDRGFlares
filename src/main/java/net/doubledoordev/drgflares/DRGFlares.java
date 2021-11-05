@@ -57,8 +57,18 @@ public class DRGFlares
         if (event.side.isServer())
             event.player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                 int storedFlares = flareCap.getStoredFlares();
+                int maxFlares = DRGFlaresConfig.GENERAL.flareQuantity.get();
 
-                if (flareCap.getReplenishTickCounter() >= DRGFlaresConfig.GENERAL.flareReplenishTime.get() && storedFlares < DRGFlaresConfig.GENERAL.flareQuantity.get())
+                if (event.player.isCreative() || (event.player.isSpectator() && !DRGFlaresConfig.GENERAL.spectatorsRequiredToGenerateFlares.get()) && flareCap.getStoredFlares() != maxFlares)
+                {
+                    flareCap.setStoredFlares(maxFlares);
+                    flareCap.setFlareThrowCoolDown(0);
+                    flareCap.setReplenishTickCounter(0);
+                    PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.player), new FlareCountSyncPacket(maxFlares));
+                    return;
+                }
+
+                if (flareCap.getReplenishTickCounter() >= DRGFlaresConfig.GENERAL.flareReplenishTime.get() && storedFlares < maxFlares)
                 {
                     int totalFlares = storedFlares + DRGFlaresConfig.GENERAL.flareReplenishQuantity.get();
 
@@ -67,6 +77,11 @@ public class DRGFlares
                     flareCap.setReplenishTickCounter(0);
                 }
                 flareCap.incrementReplenishTickCounter();
+
+                if (flareCap.getFlareThrowCoolDown() > 0)
+                {
+                    flareCap.decrementFlareThrowCoolDown();
+                }
             });
     }
 
