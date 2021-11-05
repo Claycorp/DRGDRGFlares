@@ -10,7 +10,7 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import net.doubledoordev.drgflares.DRGFlaresConfig;
-import net.doubledoordev.drgflares.capability.FlareProvider;
+import net.doubledoordev.drgflares.capability.FlareDataCap;
 import net.doubledoordev.drgflares.entity.FlareEntity;
 
 public class ThrowFlarePacket
@@ -25,7 +25,7 @@ public class ThrowFlarePacket
             World world = context.getSender().level;
             if (!world.isClientSide)
             {
-                player.getCapability(FlareProvider.FLARE_CAP_CAPABILITY).ifPresent(flareCap -> {
+                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                     if (flareCap.getStoredFlares() > 0)
                     {
                         if (DRGFlaresConfig.GENERAL.makeNoiseWhenThrown.get())

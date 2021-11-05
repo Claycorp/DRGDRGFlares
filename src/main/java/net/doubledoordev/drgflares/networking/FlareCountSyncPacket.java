@@ -6,7 +6,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import net.doubledoordev.drgflares.ClientEventHandler;
-import net.doubledoordev.drgflares.capability.FlareProvider;
+import net.doubledoordev.drgflares.capability.FlareDataCap;
 
 public class FlareCountSyncPacket
 {
@@ -30,7 +30,7 @@ public class FlareCountSyncPacket
     void handle(Supplier<NetworkEvent.Context> contextSupplier)
     {
         contextSupplier.get().enqueueWork(() -> {
-            ClientEventHandler.getPlayer().getCapability(FlareProvider.FLARE_CAP_CAPABILITY).ifPresent(flareCap -> flareCap.setStoredFlares(flareCount));
+            ClientEventHandler.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setStoredFlares(flareCount));
         });
         contextSupplier.get().setPacketHandled(true);
     }

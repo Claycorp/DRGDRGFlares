@@ -12,13 +12,13 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import static net.doubledoordev.drgflares.DRGFlares.MOD_ID;
+import static net.doubledoordev.drgflares.DRGFlares.MODID;
 
 
 public class BlockRegistry
 {
-    public static final DeferredRegister<Block> BLOCK_DEFERRED = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
-    public static final DeferredRegister<TileEntityType<?>> TILE_ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, MOD_ID);
+    public static final DeferredRegister<Block> BLOCK_DEFERRED = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
+    public static final DeferredRegister<TileEntityType<?>> TILE_ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, MODID);
 
     // Blocks
     public static final RegistryObject<Block> FAKE_LIGHT = register("fake_light", () -> new FakeLightBlock(AbstractBlock.Properties.of(Material.AIR).noDrops().noOcclusion().noCollission()));
