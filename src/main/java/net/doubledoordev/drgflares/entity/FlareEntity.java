@@ -146,6 +146,12 @@ public class FlareEntity extends ProjectileItemEntity
     }
 
     @Override
+    public boolean isAttackable()
+    {
+        return false;
+    }
+
+    @Override
     @Nonnull
     protected Item getDefaultItem()
     {
