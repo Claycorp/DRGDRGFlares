@@ -12,5 +12,6 @@
   "drgflares.config.hitEntityGlows": "If the thrown flare hits an entity, it will break and make them glow.",
   "drgflares.config.lightBlockDebug": "If for whatever reason you are having issues with the invisible lights doing odd stuff enable this to see them.",
   "drgflares.config.displayFlareCount": "Display the count of flares currently stored on the player in the HUD.",
-  "drgflares.config.makeNoiseWhenThrown": "If flares make a noise when thrown."
+  "drgflares.config.makeNoiseWhenThrown": "If flares make a noise when thrown.",
+  "drgflares.config.entityGlowingTime": "How long flares cause entities to glow when hit."
 }

@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.ProjectileItemEntity;
@@ -12,6 +13,8 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.IPacket;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -180,10 +183,13 @@ public class FlareEntity extends ProjectileItemEntity
     protected void onHitEntity(EntityRayTraceResult entityRayTraceResult)
     {
         super.onHitEntity(entityRayTraceResult);
-        if (!this.level.isClientSide)
+        Entity entity = entityRayTraceResult.getEntity();
+
+        if (!this.level.isClientSide && entity instanceof LivingEntity)
         {
+            LivingEntity livingEntity = (LivingEntity) entity;
             if (DRGFlaresConfig.GENERAL.hitEntityGlows.get())
-                entityRayTraceResult.getEntity().setGlowing(true);
+                livingEntity.addEffect(new EffectInstance(Effects.GLOWING, DRGFlaresConfig.GENERAL.entityGlowingTime.get(), 0, false, false));
 
             this.level.broadcastEntityEvent(this, (byte) 3);
             this.remove();
