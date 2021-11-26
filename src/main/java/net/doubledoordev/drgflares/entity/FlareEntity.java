@@ -4,12 +4,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.projectile.ProjectileItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
+import net.minecraft.entity.projectile.ThrowableEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.IPacket;
@@ -28,12 +27,13 @@ import net.doubledoordev.drgflares.block.BlockRegistry;
 import net.doubledoordev.drgflares.block.FakeLightBlock;
 import net.doubledoordev.drgflares.block.FakeLightBlockEntity;
 
-public class FlareEntity extends ProjectileItemEntity
+public class FlareEntity extends ThrowableEntity
 {
     BlockPos lightBlockPos = null;
     boolean shouldSpawnFakeLights = true;
+    BlockPos lastHitBlock = new BlockPos(0, 256, 0);
 
-    public FlareEntity(EntityType<? extends ProjectileItemEntity> entityType, World world)
+    public FlareEntity(EntityType<? extends ThrowableEntity> entityType, World world)
     {
         super(entityType, world);
     }
@@ -46,10 +46,17 @@ public class FlareEntity extends ProjectileItemEntity
     @Override
     public void tick()
     {
+        //TODO: Replace in 1.17+
         if (getY() <= 0)
             this.kill();
         if (!level.isClientSide())
         {
+
+            if (level.getBlockState(this.getOnPos()).is(Blocks.AIR))
+            {
+                this.setNoGravity(false);
+            }
+
             // Make sure to call the super so we actually move unless we plan on rewriting the whole movement lot.
             super.tick();
             // Make sure we have a way to clean up the entities.
@@ -149,20 +156,6 @@ public class FlareEntity extends ProjectileItemEntity
     }
 
     @Override
-    public boolean isAttackable()
-    {
-        return false;
-    }
-
-    @Override
-    @Nonnull
-    protected Item getDefaultItem()
-    {
-        //TODO: Someday config/improve this.
-        return Items.TORCH;
-    }
-
-    @Override
     @ParametersAreNonnullByDefault
     public void addAdditionalSaveData(CompoundNBT compoundNBT)
     {
@@ -196,39 +189,56 @@ public class FlareEntity extends ProjectileItemEntity
         }
     }
 
-    @Override
     @ParametersAreNonnullByDefault
+    @Override
     protected void onHitBlock(BlockRayTraceResult rayTraceResult)
     {
         Vector3d vec = this.getDeltaMovement();
+        super.onHitBlock(rayTraceResult);
 
-        // Stops item from jittering when on the ground. Could be improved some day.
-        if (vec.y > -0.03)
+        BlockPos hitPos = rayTraceResult.getBlockPos();
+
+        if (!lastHitBlock.equals(hitPos) && !level.getBlockState(hitPos).getCollisionShape(level, hitPos).isEmpty())
+        {
+            Direction directionOpposite = rayTraceResult.getDirection().getOpposite();
+            double bounceDampeningModifier = DRGFlaresConfig.GENERAL.bounceModifier.get();
+
+            lastHitBlock = hitPos;
+
+            double vecX = vec.x / bounceDampeningModifier;
+            double vecY = vec.y / bounceDampeningModifier;
+            double vecZ = vec.z / bounceDampeningModifier;
+
+            switch (directionOpposite)
+            {
+                case UP:
+                case DOWN:
+                    setDeltaMovement(vecX, -vecY, vecZ);
+                    break;
+                case EAST:
+                case WEST:
+                    setDeltaMovement(-vecX, vecY, vecZ);
+                    break;
+                case NORTH:
+                case SOUTH:
+                    setDeltaMovement(vecX, vecY, -vecZ);
+            }
+        }
+        else if (lastHitBlock.equals(hitPos))
         {
             setDeltaMovement(Vector3d.ZERO);
-            return;
+            setNoGravity(true);
         }
+    }
 
-        Direction directionOpposite = rayTraceResult.getDirection().getOpposite();
-        double bounceDampeningModifier = DRGFlaresConfig.GENERAL.bounceModifier.get();
+    @Override
+    protected void defineSynchedData()
+    {
+    }
 
-        double vecX = vec.x / bounceDampeningModifier;
-        double vecY = vec.y / bounceDampeningModifier;
-        double vecZ = vec.z / bounceDampeningModifier;
-
-        switch (directionOpposite)
-        {
-            case UP:
-            case DOWN:
-                setDeltaMovement(vecX, -vecY, vecZ);
-                return;
-            case EAST:
-            case WEST:
-                setDeltaMovement(-vecX, vecY, vecZ);
-                return;
-            case NORTH:
-            case SOUTH:
-                setDeltaMovement(vecX, vecY, -vecZ);
-        }
+    @Override
+    public boolean isAttackable()
+    {
+        return false;
     }
 }

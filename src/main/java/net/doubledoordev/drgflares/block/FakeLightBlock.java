@@ -59,14 +59,6 @@ public class FakeLightBlock extends Block
     @Nonnull
     @ParametersAreNonnullByDefault
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader level, BlockPos pos, ISelectionContext selectionContext)
-    {
-        return VoxelShapes.empty();
-    }
-
-    @Nonnull
-    @ParametersAreNonnullByDefault
-    @Override
     public VoxelShape getInteractionShape(BlockState state, IBlockReader world, BlockPos pos)
     {
         return VoxelShapes.empty();
@@ -77,6 +69,14 @@ public class FakeLightBlock extends Block
     public float getShadeBrightness(BlockState state, IBlockReader blockReader, BlockPos pos)
     {
         return 1.0F;
+    }
+
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader level, BlockPos pos, ISelectionContext selectionContext)
+    {
+        return VoxelShapes.empty();
     }
 
     @Override

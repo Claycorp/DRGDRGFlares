@@ -4,7 +4,6 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
-import net.minecraft.client.renderer.entity.SpriteRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,6 +21,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import net.doubledoordev.drgflares.block.BlockRegistry;
 import net.doubledoordev.drgflares.capability.FlareDataCap;
+import net.doubledoordev.drgflares.client.FlareRenderer;
 import net.doubledoordev.drgflares.entity.EntityRegistry;
 import net.doubledoordev.drgflares.networking.PacketHandler;
 import net.doubledoordev.drgflares.networking.ThrowFlarePacket;
@@ -45,7 +45,7 @@ public class ClientEventHandler
         public static void clientRendering(FMLClientSetupEvent event)
         {
             ClientRegistry.registerKeyBinding(THROW_FLARE);
-            RenderingRegistry.registerEntityRenderingHandler(EntityRegistry.FLARE_ENTITY.get(), manager -> new SpriteRenderer<>(event.getMinecraftSupplier().get().getEntityRenderDispatcher(), event.getMinecraftSupplier().get().getItemRenderer()));
+            RenderingRegistry.registerEntityRenderingHandler(EntityRegistry.FLARE_ENTITY.get(), manager -> new FlareRenderer(event.getMinecraftSupplier().get().getEntityRenderDispatcher()));
             DeferredWorkQueue.runLater(() -> RenderTypeLookup.setRenderLayer(BlockRegistry.FAKE_LIGHT.get(), RenderType.cutout()));
         }
     }
