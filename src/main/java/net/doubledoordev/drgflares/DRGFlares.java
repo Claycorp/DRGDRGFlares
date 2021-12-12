@@ -54,7 +54,7 @@ public class DRGFlares
     @SubscribeEvent
     public static void playerTick(TickEvent.PlayerTickEvent event)
     {
-        if (event.side.isServer())
+        if (event.side.isServer() && event.phase.equals(TickEvent.Phase.START))
             event.player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                 int storedFlares = flareCap.getStoredFlares();
                 int maxFlares = DRGFlaresConfig.GENERAL.flareQuantity.get();

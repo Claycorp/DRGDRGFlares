@@ -160,7 +160,8 @@ public class FlareEntity extends ThrowableEntity
     public void addAdditionalSaveData(CompoundNBT compoundNBT)
     {
         super.addAdditionalSaveData(compoundNBT);
-        NBTUtil.writeBlockPos(lightBlockPos);
+        if (lightBlockPos != null)
+            NBTUtil.writeBlockPos(lightBlockPos);
     }
 
     @Override

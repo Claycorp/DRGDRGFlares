@@ -68,7 +68,7 @@ public class DRGFlaresConfig
                     .define("makeNoiseWhenThrown", true);
 
             flareThrowCoolDown = builder
-                    .comment("Time it takes before you can throw another flare. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour")
+                    .comment("Time in ticks it takes before you can throw another flare. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour")
                     .translation("drgflares.config.flareThrowCoolDown")
                     .defineInRange("flareThrowCoolDown", 5, 1, Integer.MAX_VALUE);
 
