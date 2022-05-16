@@ -49,7 +49,7 @@ public class FakeLightBlock extends Block
     public BlockRenderType getRenderShape(BlockState state)
     {
         // Do this so we can get visible light blocks.
-        if (DRGFlaresConfig.GENERAL.lightBlockDebug.get())
+        if (DRGFlaresConfig.GENERALCONFIG.lightBlockDebug.get())
         {
             return BlockRenderType.MODEL;
         }
@@ -82,7 +82,7 @@ public class FakeLightBlock extends Block
     @Override
     public int getLightValue(BlockState state, IBlockReader world, BlockPos pos)
     {
-        return DRGFlaresConfig.GENERAL.flareLightLevel.get();
+        return DRGFlaresConfig.GENERALCONFIG.flareLightLevel.get();
     }
 
     @Override

@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 
 group = 'net.doubledoordev'
-version = '1.0.5'
+version = '1.1.0'
 archivesBaseName = 'DRGFlares'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.

@@ -60,13 +60,6 @@ public class FlareModel extends EntityModel<FlareEntity>
     {
         topRing.render(matrixStack, buffer, packedLight, packedOverlay);
         bottomRing.render(matrixStack, buffer, packedLight, packedOverlay);
-        core.render(matrixStack, buffer, packedLight, packedOverlay);
-    }
-
-    public void setRotationAngle(ModelRenderer modelRenderer, float x, float y, float z)
-    {
-        modelRenderer.xRot = x;
-        modelRenderer.yRot = y;
-        modelRenderer.zRot = z;
+        core.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

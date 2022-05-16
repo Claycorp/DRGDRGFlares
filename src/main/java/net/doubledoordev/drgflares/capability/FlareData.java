@@ -9,6 +9,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
+import net.doubledoordev.drgflares.DRGFlares;
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 
 public class FlareData implements ICapabilitySerializable<CompoundNBT>
@@ -18,10 +19,13 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
     private int storedFlares;
     private int replenishTickCounter;
     private int flareThrowCoolDown;
+    private int flareColor;
+    private int flaresThrown;
 
     public FlareData()
     {
-        this.storedFlares = DRGFlaresConfig.GENERAL.flareQuantity.get();
+        this.storedFlares = DRGFlaresConfig.GENERALCONFIG.flareQuantity.get();
+        this.flareColor = DRGFlares.stringToColorInt(DRGFlaresConfig.GENERALCONFIG.flareCoreColor.get());
     }
 
     public int getStoredFlares()
@@ -64,6 +68,31 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
         flareThrowCoolDown--;
     }
 
+    public int getFlareColor()
+    {
+        return flareColor;
+    }
+
+    public void setFlareColor(int flareColor)
+    {
+        this.flareColor = flareColor;
+    }
+
+    public int getFlaresThrown()
+    {
+        return flaresThrown;
+    }
+
+    public void setFlaresThrown(int flaresThrown)
+    {
+        this.flaresThrown = flaresThrown;
+    }
+
+    public void incrementThrownFlares()
+    {
+        this.flaresThrown++;
+    }
+
     @Override
     public CompoundNBT serializeNBT()
     {
@@ -71,6 +100,8 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
         compoundNBT.putInt("flareCount", getStoredFlares());
         compoundNBT.putInt("replenishTickCounter", getReplenishTickCounter());
         compoundNBT.putInt("throwCoolDown", getFlareThrowCoolDown());
+        compoundNBT.putInt("color", getFlareColor());
+        compoundNBT.putInt("flaresThrown", getFlaresThrown());
         return compoundNBT;
     }
 
@@ -80,6 +111,8 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
         setStoredFlares(nbt.getInt("flareCount"));
         setReplenishTickCounter(nbt.getInt("replenishTickCounter"));
         setFlareThrowCoolDown(nbt.getInt("throwCoolDown"));
+        setFlareColor(nbt.getInt("color"));
+        setFlaresThrown(nbt.getInt("flaresThrown"));
     }
 
     /**

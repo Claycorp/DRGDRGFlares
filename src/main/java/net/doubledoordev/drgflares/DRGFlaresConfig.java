@@ -5,14 +5,14 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class DRGFlaresConfig
 {
-    public static final DRGFlaresConfig.General GENERAL;
+    public static final DRGFlaresConfig.General GENERALCONFIG;
     static final ForgeConfigSpec spec;
 
     static
     {
         final Pair<General, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(DRGFlaresConfig.General::new);
         spec = specPair.getRight();
-        GENERAL = specPair.getLeft();
+        GENERALCONFIG = specPair.getLeft();
     }
 
     public static class General
@@ -29,6 +29,8 @@ public class DRGFlaresConfig
 
         public ForgeConfigSpec.DoubleValue bounceModifier;
         public ForgeConfigSpec.DoubleValue flareGravity;
+        public ForgeConfigSpec.DoubleValue flareThrowForce;
+        public ForgeConfigSpec.DoubleValue flareRotationStrength;
 
         public ForgeConfigSpec.BooleanValue hitEntityGlows;
         public ForgeConfigSpec.BooleanValue lightBlockDebug;
@@ -36,6 +38,8 @@ public class DRGFlaresConfig
         public ForgeConfigSpec.BooleanValue makeNoiseWhenThrown;
         public ForgeConfigSpec.BooleanValue spectatorsThrowFlares;
         public ForgeConfigSpec.BooleanValue spectatorsRequiredToGenerateFlares;
+
+        public ForgeConfigSpec.ConfigValue<String> flareCoreColor;
 
         General(ForgeConfigSpec.Builder builder)
         {
@@ -81,6 +85,11 @@ public class DRGFlaresConfig
                     .comment("Are spectators required to generate flares to throw them like a regular player?")
                     .translation("drgflares.config.spectatorsRequiredToGenerateFlares")
                     .define("spectatorsRequiredToGenerateFlares", true);
+
+            flareThrowForce = builder
+                    .comment("How \"hard\" (far) flares are thrown.")
+                    .translation("drgflares.config.flareThrowForce")
+                    .defineInRange("flareThrowForce", 1.5, 0, Float.MAX_VALUE);
 
             builder.pop();
             builder.comment("Flare lighting settings")
@@ -136,6 +145,16 @@ public class DRGFlaresConfig
                     .comment("How much movement is removed from the entity over time in the Y direction. AKA GRAVITY! Higher = thicc flares")
                     .translation("drgflares.config.flareGravity")
                     .defineInRange("flareGravity", 0.03F, 0, 1);
+
+            flareRotationStrength = builder
+                    .comment("How strongly rotation is applied to flares. Too high and they get glitchy, too low and they don't rotate much at all.")
+                    .translation("drgflares.config.flareRotationStrength")
+                    .defineInRange("flareRotationStrength", 2.5F, 0, Float.MAX_VALUE);
+
+            flareCoreColor = builder
+                    .comment("Default flare core color ONLY CAN USE HEX VALUES. Players can change this by typing \"setflarecolor #hexhere\" in chat. NOTE: Incorrect colors will default to #a66ff2!")
+                    .translation("drgflares.config.flareCoreColor")
+                    .define("flareCoreColor", "#a66ff2");
 
             builder.pop();
 

@@ -12,6 +12,9 @@ import net.minecraft.entity.projectile.ThrowableEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.IPacket;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.Direction;
@@ -32,6 +35,11 @@ public class FlareEntity extends ThrowableEntity
     BlockPos lightBlockPos = null;
     boolean shouldSpawnFakeLights = true;
     BlockPos lastHitBlock = new BlockPos(0, 256, 0);
+    public final static DataParameter<Float> X_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
+    public final static DataParameter<Float> Y_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
+    public final static DataParameter<Float> Z_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
+    public final static DataParameter<Integer> COLOR = EntityDataManager.defineId(FlareEntity.class, DataSerializers.INT);
+    Vector3d previousPosition = Vector3d.ZERO;
 
     public FlareEntity(EntityType<? extends ThrowableEntity> entityType, World world)
     {
@@ -46,6 +54,22 @@ public class FlareEntity extends ThrowableEntity
     @Override
     public void tick()
     {
+        //Can't get the movement force if there's no previous position to work from or if they are the same.
+        if (!previousPosition.equals(Vector3d.ZERO) || !previousPosition.equals(position()))
+        {
+            //Find out what the "force" behind the object is by subtracting the two positions.
+            Vector3d movementForce = previousPosition.subtract(position());
+            //Only rotate if there's force.
+            if (!movementForce.equals(Vector3d.ZERO))
+            {
+                //Set the entity data so the rendering can rotate the object and then this data can be stored for later use to keep objects rotated correctly on reload.
+                this.entityData.set(X_PHY_ROT, (float) (entityData.get(X_PHY_ROT) + random.nextFloat() * movementForce.x));
+                this.entityData.set(Y_PHY_ROT, (float) (entityData.get(Y_PHY_ROT) + random.nextFloat() * movementForce.y));
+                this.entityData.set(Z_PHY_ROT, (float) (entityData.get(Z_PHY_ROT) + random.nextFloat() * movementForce.z));
+            }
+        }
+        previousPosition = position();
+
         //TODO: Replace in 1.17+
         if (getY() <= 0)
             this.kill();
@@ -57,10 +81,10 @@ public class FlareEntity extends ThrowableEntity
                 this.setNoGravity(false);
             }
 
-            // Make sure to call the super so we actually move unless we plan on rewriting the whole movement lot.
+            // Make sure to call the super, so we actually move unless we plan on rewriting the whole movement lot.
             super.tick();
             // Make sure we have a way to clean up the entities.
-            if (tickCount > DRGFlaresConfig.GENERAL.entityDecayTime.get() + DRGFlaresConfig.GENERAL.lightDecayTime.get())
+            if (tickCount > DRGFlaresConfig.GENERALCONFIG.entityDecayTime.get() + DRGFlaresConfig.GENERALCONFIG.lightDecayTime.get())
                 this.kill();
 
             if (shouldSpawnFakeLights)
@@ -85,7 +109,7 @@ public class FlareEntity extends ThrowableEntity
     @Override
     protected float getGravity()
     {
-        return DRGFlaresConfig.GENERAL.flareGravity.get().floatValue();
+        return DRGFlaresConfig.GENERALCONFIG.flareGravity.get().floatValue();
     }
 
     // You need this because vanilla be stupid and doesn't give a shit.
@@ -105,13 +129,13 @@ public class FlareEntity extends ThrowableEntity
             if (lightTE != null)
             {
                 // make sure to disable the light at the correct time.
-                if (DRGFlaresConfig.GENERAL.lightDecayTime.get() <= tickCount)
+                if (DRGFlaresConfig.GENERALCONFIG.lightDecayTime.get() <= tickCount)
                 {
                     level.getBlockState(blockPos).setValue(FakeLightBlock.LIT, false);
                     shouldSpawnFakeLights = false;
                 }
                 else
-                    lightTE.setNextCheckIn(DRGFlaresConfig.GENERAL.noSourceDecayTime.get());
+                    lightTE.setNextCheckIn(DRGFlaresConfig.GENERALCONFIG.noSourceDecayTime.get());
             }
             else
             {
@@ -162,6 +186,10 @@ public class FlareEntity extends ThrowableEntity
         super.addAdditionalSaveData(compoundNBT);
         if (lightBlockPos != null)
             NBTUtil.writeBlockPos(lightBlockPos);
+        compoundNBT.putFloat("xPhyRot", this.entityData.get(X_PHY_ROT));
+        compoundNBT.putFloat("yPhyRot", this.entityData.get(Y_PHY_ROT));
+        compoundNBT.putFloat("zPhyRot", this.entityData.get(Z_PHY_ROT));
+        compoundNBT.putInt("color", this.entityData.get(COLOR));
     }
 
     @Override
@@ -170,6 +198,10 @@ public class FlareEntity extends ThrowableEntity
     {
         super.readAdditionalSaveData(compoundNBT);
         lightBlockPos = NBTUtil.readBlockPos(compoundNBT);
+        this.entityData.set(X_PHY_ROT, compoundNBT.getFloat("xPhyRot"));
+        this.entityData.set(Y_PHY_ROT, compoundNBT.getFloat("yPhyRot"));
+        this.entityData.set(Z_PHY_ROT, compoundNBT.getFloat("zPhyRot"));
+        this.entityData.set(COLOR, compoundNBT.getInt("color"));
     }
 
     @Override
@@ -182,8 +214,8 @@ public class FlareEntity extends ThrowableEntity
         if (!this.level.isClientSide && entity instanceof LivingEntity)
         {
             LivingEntity livingEntity = (LivingEntity) entity;
-            if (DRGFlaresConfig.GENERAL.hitEntityGlows.get())
-                livingEntity.addEffect(new EffectInstance(Effects.GLOWING, DRGFlaresConfig.GENERAL.entityGlowingTime.get(), 0, false, false));
+            if (DRGFlaresConfig.GENERALCONFIG.hitEntityGlows.get())
+                livingEntity.addEffect(new EffectInstance(Effects.GLOWING, DRGFlaresConfig.GENERALCONFIG.entityGlowingTime.get(), 0, false, false));
 
             this.level.broadcastEntityEvent(this, (byte) 3);
             this.remove();
@@ -202,7 +234,7 @@ public class FlareEntity extends ThrowableEntity
         if (!lastHitBlock.equals(hitPos) && !level.getBlockState(hitPos).getCollisionShape(level, hitPos).isEmpty())
         {
             Direction directionOpposite = rayTraceResult.getDirection().getOpposite();
-            double bounceDampeningModifier = DRGFlaresConfig.GENERAL.bounceModifier.get();
+            double bounceDampeningModifier = DRGFlaresConfig.GENERALCONFIG.bounceModifier.get();
 
             lastHitBlock = hitPos;
 
@@ -232,14 +264,30 @@ public class FlareEntity extends ThrowableEntity
         }
     }
 
+    public void setColor(int color)
+    {
+        this.entityData.set(COLOR, color);
+    }
+
     @Override
     protected void defineSynchedData()
     {
+        this.entityData.define(X_PHY_ROT, random.nextFloat());
+        this.entityData.define(Y_PHY_ROT, random.nextFloat());
+        this.entityData.define(Z_PHY_ROT, random.nextFloat());
+        this.entityData.define(COLOR, 10907634);
     }
 
     @Override
     public boolean isAttackable()
     {
         return false;
+    }
+
+    //Removes the entity fire.
+    @Override
+    public boolean fireImmune()
+    {
+        return true;
     }
 }

@@ -1,5 +1,6 @@
 package net.doubledoordev.drgflares;
 
+import java.util.Locale;
 import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -57,9 +59,9 @@ public class DRGFlares
         if (event.side.isServer() && event.phase.equals(TickEvent.Phase.START))
             event.player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                 int storedFlares = flareCap.getStoredFlares();
-                int maxFlares = DRGFlaresConfig.GENERAL.flareQuantity.get();
+                int maxFlares = DRGFlaresConfig.GENERALCONFIG.flareQuantity.get();
 
-                if (event.player.isCreative() || (event.player.isSpectator() && !DRGFlaresConfig.GENERAL.spectatorsRequiredToGenerateFlares.get()) && flareCap.getStoredFlares() != maxFlares)
+                if (event.player.isCreative() || (event.player.isSpectator() && !DRGFlaresConfig.GENERALCONFIG.spectatorsRequiredToGenerateFlares.get()) && flareCap.getStoredFlares() != maxFlares)
                 {
                     flareCap.setStoredFlares(maxFlares);
                     flareCap.setFlareThrowCoolDown(0);
@@ -68,9 +70,9 @@ public class DRGFlares
                     return;
                 }
 
-                if (flareCap.getReplenishTickCounter() >= DRGFlaresConfig.GENERAL.flareReplenishTime.get() && storedFlares < maxFlares)
+                if (flareCap.getReplenishTickCounter() >= DRGFlaresConfig.GENERALCONFIG.flareReplenishTime.get() && storedFlares < maxFlares)
                 {
-                    int totalFlares = storedFlares + DRGFlaresConfig.GENERAL.flareReplenishQuantity.get();
+                    int totalFlares = storedFlares + DRGFlaresConfig.GENERALCONFIG.flareReplenishQuantity.get();
 
                     flareCap.setStoredFlares(totalFlares);
                     PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.player), new FlareCountSyncPacket(totalFlares));
@@ -83,6 +85,20 @@ public class DRGFlares
                     flareCap.decrementFlareThrowCoolDown();
                 }
             });
+    }
+
+    @SubscribeEvent
+    public static void chatMessage(ServerChatEvent event)
+    {
+        String message = event.getMessage().toLowerCase(Locale.ROOT);
+
+        if (message.contains("setflarecolor"))
+        {
+            event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
+                flareCap.setFlareColor(stringToColorInt(message.substring(13)));
+            });
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
@@ -140,4 +156,116 @@ public class DRGFlares
         });
     }
 
+    public static int stringToColorInt(String colorString)
+    {
+        String preparedColorString = colorString.trim();
+        int color = 10907634; //Some purple color default AKA #a66ff2.
+        //decode operation requires the # symbol to decode it.
+        if (preparedColorString.startsWith("#"))
+        {
+            try
+            {
+                color = Integer.decode(preparedColorString);
+            }
+            catch (NumberFormatException e)
+            {
+                LOGGER.error("INCORRECT FORMAT FOR FLARE COLOR USING DEFAULT! Color provided: " + preparedColorString);
+            }
+            return color;
+        }
+        //If no #, try our custom render options.
+        else
+        {
+            switch (preparedColorString)
+            {
+                //Numbers are arbitrary but must match what is used in the render method with special renders. Otherwise, a valid color number can be set.
+                case "rainbow":
+                    return 1;
+                case "jeb":
+                    return 2;
+                //Handled in packet toss as the ID needs to be random per flare not per render frame.
+                case "random":
+                    return 3;
+            }
+        }
+
+        LOGGER.error("INCORRECT FORMAT FOR FLARE COLOR USING DEFAULT! Color provided: " + preparedColorString);
+        return color;
+    }
+
+    /**
+     * Converts the components of a color, as specified by the HSB
+     * model, to an equivalent set of values for the default RGB model.
+     * <p>
+     * The <code>saturation</code> and <code>brightness</code> components
+     * should be floating-point values between zero and one
+     * (numbers in the range 0.0-1.0).  The <code>hue</code> component
+     * can be any floating-point number.  The floor of this number is
+     * subtracted from it to create a fraction between 0 and 1.  This
+     * fractional number is then multiplied by 360 to produce the hue
+     * angle in the HSB color model.
+     * <p>
+     * The integer that is returned by <code>HSBtoRGB</code> encodes the
+     * value of a color in bits 0-23 of an integer value that is the same
+     * format used by the method {@link #getRGB() getRGB}.
+     * This integer can be supplied as an argument to the
+     * <code>Color</code> constructor that takes a single integer argument.
+     *
+     * @param hue        the hue component of the color
+     * @param saturation the saturation of the color
+     * @param brightness the brightness of the color
+     * @return the RGB value of the color with the indicated hue,
+     * saturation, and brightness.
+     **/
+    //Borrowed from AWT as it's not found on servers and thus would crash.
+    public static int HSBtoRGB(float hue, float saturation, float brightness)
+    {
+        int r = 0, g = 0, b = 0;
+        if (saturation == 0)
+        {
+            r = g = b = (int) (brightness * 255.0f + 0.5f);
+        }
+        else
+        {
+            float h = (hue - (float) Math.floor(hue)) * 6.0f;
+            float f = h - (float) java.lang.Math.floor(h);
+            float p = brightness * (1.0f - saturation);
+            float q = brightness * (1.0f - saturation * f);
+            float t = brightness * (1.0f - (saturation * (1.0f - f)));
+            switch ((int) h)
+            {
+                case 0:
+                    r = (int) (brightness * 255.0f + 0.5f);
+                    g = (int) (t * 255.0f + 0.5f);
+                    b = (int) (p * 255.0f + 0.5f);
+                    break;
+                case 1:
+                    r = (int) (q * 255.0f + 0.5f);
+                    g = (int) (brightness * 255.0f + 0.5f);
+                    b = (int) (p * 255.0f + 0.5f);
+                    break;
+                case 2:
+                    r = (int) (p * 255.0f + 0.5f);
+                    g = (int) (brightness * 255.0f + 0.5f);
+                    b = (int) (t * 255.0f + 0.5f);
+                    break;
+                case 3:
+                    r = (int) (p * 255.0f + 0.5f);
+                    g = (int) (q * 255.0f + 0.5f);
+                    b = (int) (brightness * 255.0f + 0.5f);
+                    break;
+                case 4:
+                    r = (int) (t * 255.0f + 0.5f);
+                    g = (int) (p * 255.0f + 0.5f);
+                    b = (int) (brightness * 255.0f + 0.5f);
+                    break;
+                case 5:
+                    r = (int) (brightness * 255.0f + 0.5f);
+                    g = (int) (p * 255.0f + 0.5f);
+                    b = (int) (q * 255.0f + 0.5f);
+                    break;
+            }
+        }
+        return 0xff000000 | (r << 16) | (g << 8) | (b);
+    }
 }

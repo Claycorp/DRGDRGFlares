@@ -17,8 +17,8 @@ import net.doubledoordev.drgflares.DRGFlaresConfig;
 
 public class FakeLightBlockEntity extends TileEntity implements ITickableTileEntity
 {
-    int lightDecayTime = DRGFlaresConfig.GENERAL.lightDecayTime.get();
-    int nextCheckIn = DRGFlaresConfig.GENERAL.noSourceDecayTime.get();
+    int lightDecayTime = DRGFlaresConfig.GENERALCONFIG.lightDecayTime.get();
+    int nextCheckIn = DRGFlaresConfig.GENERALCONFIG.noSourceDecayTime.get();
     int tickCounter;
 
     public FakeLightBlockEntity(TileEntityType<?> tileEntityType)

@@ -69,10 +69,10 @@ public class ClientEventHandler
         {
             PlayerEntity player = Minecraft.getInstance().player;
 
-            if (DRGFlaresConfig.GENERAL.displayFlareCount.get() && player != null)
+            if (DRGFlaresConfig.GENERALCONFIG.displayFlareCount.get() && player != null)
             {
                 player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
-                    event.getLeft().add("Flares: " + flareCap.getStoredFlares() + "/" + DRGFlaresConfig.GENERAL.flareQuantity.get());
+                    event.getLeft().add("Flares: " + flareCap.getStoredFlares() + "/" + DRGFlaresConfig.GENERALCONFIG.flareQuantity.get());
                 });
             }
         }

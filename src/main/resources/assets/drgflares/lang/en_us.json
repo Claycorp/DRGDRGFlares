@@ -15,5 +15,8 @@
   "drgflares.config.makeNoiseWhenThrown": "If flares make a noise when thrown.",
   "drgflares.config.entityGlowingTime": "How long flares cause entities to glow when hit.",
   "drgflares.config.spectatorsThrowFlares": "If spectators can throw flares.",
-  "drgflares.config.spectatorsRequiredToGenerateFlares": "If spectators need to generate flares to throw them like a regular player."
+  "drgflares.config.spectatorsRequiredToGenerateFlares": "If spectators need to generate flares to throw them like a regular player.",
+  "drgflares.config.flareThrowForce": "How \"hard\" (far) flares are thrown.",
+  "drgflares.config.flareRotationStrength": "How strongly rotation is applied to flares. Too high and they get glitchy, too low and they don't rotate much at all.",
+  "drgflares.config.flareCoreColor": "Default color of flare cores for all players, accepts hex only. NOTE: Incorrect colors will default to #c334eb!"
 }
