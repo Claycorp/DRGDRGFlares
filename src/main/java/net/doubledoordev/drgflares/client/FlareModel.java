@@ -1,65 +1,79 @@
 package net.doubledoordev.drgflares.client;
+// Made with Blockbench 4.2.4
+// Exported for Minecraft version 1.17 - 1.18 with Mojang mappings
+// Paste this class into your mod and generate all required imports
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.client.renderer.entity.model.EntityModel;
-import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.doubledoordev.drgflares.entity.FlareEntity;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.doubledoordev.drgflares.DRGFlares;
 
-public class FlareModel extends EntityModel<FlareEntity>
+public class FlareModel<T extends Entity> extends EntityModel<T>
 {
-    private final ModelRenderer topRing;
-    private final ModelRenderer bottomRing;
-    private final ModelRenderer core;
+    // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
+    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(DRGFlares.MODID, "flaremodel"), "main");
 
-    public FlareModel()
+    public static LayerDefinition createBodyLayer()
     {
-        texWidth = 32;
-        texHeight = 32;
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
 
-        topRing = new ModelRenderer(this);
-        topRing.setPos(0.0F, 0.0F, 0.0F);
-        topRing.texOffs(0, 13).addBox(-3.0F, 9.0F, -3.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        topRing.texOffs(0, 13).addBox(1.0F, 9.0F, -3.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        topRing.texOffs(0, 13).addBox(1.0F, 9.0F, 1.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        topRing.texOffs(0, 13).addBox(-3.0F, 9.0F, 1.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        topRing.texOffs(13, 15).addBox(-1.0F, 10.0F, -2.5F, 2.0F, 1.0F, 1.0F, 0.0F, false);
-        topRing.texOffs(8, 13).addBox(-2.5F, 10.0F, -1.0F, 1.0F, 1.0F, 2.0F, 0.0F, false);
-        topRing.texOffs(12, 13).addBox(-1.0F, 10.0F, 1.5F, 2.0F, 1.0F, 1.0F, 0.0F, false);
-        topRing.texOffs(12, 0).addBox(1.5F, 10.0F, -1.0F, 1.0F, 1.0F, 2.0F, 0.0F, false);
+        PartDefinition topRing = partdefinition.addOrReplaceChild("topRing", CubeListBuilder.create().texOffs(0, 13).addBox(-3.0F, 9.0F, -3.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(1.0F, 9.0F, -3.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(1.0F, 9.0F, 1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(-3.0F, 9.0F, 1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(13, 15).addBox(-1.0F, 10.0F, -2.5F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(8, 13).addBox(-2.5F, 10.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(12, 13).addBox(-1.0F, 10.0F, 1.5F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(12, 0).addBox(1.5F, 10.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        bottomRing = new ModelRenderer(this);
-        bottomRing.setPos(0.0F, 0.0F, 0.0F);
-        bottomRing.texOffs(0, 13).addBox(-3.0F, -1.0F, -3.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        bottomRing.texOffs(0, 13).addBox(1.0F, -1.0F, -3.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        bottomRing.texOffs(0, 13).addBox(1.0F, -1.0F, 1.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        bottomRing.texOffs(0, 13).addBox(-3.0F, -1.0F, 1.0F, 2.0F, 3.0F, 2.0F, 0.0F, false);
-        bottomRing.texOffs(13, 15).addBox(-1.0F, 0.0F, -2.5F, 2.0F, 1.0F, 1.0F, 0.0F, false);
-        bottomRing.texOffs(8, 13).addBox(-2.5F, 0.0F, -1.0F, 1.0F, 1.0F, 2.0F, 0.0F, false);
-        bottomRing.texOffs(12, 13).addBox(-1.0F, 0.0F, 1.5F, 2.0F, 1.0F, 1.0F, 0.0F, false);
-        bottomRing.texOffs(12, 0).addBox(1.5F, 0.0F, -1.0F, 1.0F, 1.0F, 2.0F, 0.0F, false);
+        PartDefinition bottomRing = partdefinition.addOrReplaceChild("bottomRing", CubeListBuilder.create().texOffs(0, 13).addBox(-3.0F, -1.0F, -3.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(1.0F, -1.0F, -3.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(1.0F, -1.0F, 1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 13).addBox(-3.0F, -1.0F, 1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(13, 15).addBox(-1.0F, 0.0F, -2.5F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(8, 13).addBox(-2.5F, 0.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(12, 13).addBox(-1.0F, 0.0F, 1.5F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(12, 0).addBox(1.5F, 0.0F, -1.0F, 1.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        core = new ModelRenderer(this);
-        core.setPos(0.0F, 1.0F, 0.0F);
-        core.texOffs(0, 0).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 9.0F, 4.0F, 0.0F, false);
+        PartDefinition core = partdefinition.addOrReplaceChild("core", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 9.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.0F, 0.0F));
+
+        return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
-    @ParametersAreNonnullByDefault
-    @Override
-    public void setupAnim(FlareEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+    private final ModelPart topRing;
+    private final ModelPart bottomRing;
+    private final ModelPart core;
+
+    public FlareModel(ModelPart root)
     {
-        //previously the render function, render code was moved to a method below
+        this.topRing = root.getChild("topRing");
+        this.bottomRing = root.getChild("bottomRing");
+        this.core = root.getChild("core");
     }
 
-    @ParametersAreNonnullByDefault
     @Override
-    public void renderToBuffer(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    @ParametersAreNonnullByDefault
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
     {
-        topRing.render(matrixStack, buffer, packedLight, packedOverlay);
-        bottomRing.render(matrixStack, buffer, packedLight, packedOverlay);
-        core.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+
+    }
+
+    @Override
+    @ParametersAreNonnullByDefault
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    {
+        topRing.render(poseStack, vertexConsumer, packedLight, packedOverlay);
+        bottomRing.render(poseStack, vertexConsumer, packedLight, packedOverlay);
+        core.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

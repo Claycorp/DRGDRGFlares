@@ -3,8 +3,8 @@ package net.doubledoordev.drgflares.capability;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -12,7 +12,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.doubledoordev.drgflares.DRGFlares;
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 
-public class FlareData implements ICapabilitySerializable<CompoundNBT>
+public class FlareData implements ICapabilitySerializable<CompoundTag>
 {
     private final LazyOptional<FlareData> capability = LazyOptional.of(() -> this);
 
@@ -94,25 +94,25 @@ public class FlareData implements ICapabilitySerializable<CompoundNBT>
     }
 
     @Override
-    public CompoundNBT serializeNBT()
+    public CompoundTag serializeNBT()
     {
-        CompoundNBT compoundNBT = new CompoundNBT();
-        compoundNBT.putInt("flareCount", getStoredFlares());
-        compoundNBT.putInt("replenishTickCounter", getReplenishTickCounter());
-        compoundNBT.putInt("throwCoolDown", getFlareThrowCoolDown());
-        compoundNBT.putInt("color", getFlareColor());
-        compoundNBT.putInt("flaresThrown", getFlaresThrown());
-        return compoundNBT;
+        CompoundTag compoundTag = new CompoundTag();
+        compoundTag.putInt("flareCount", getStoredFlares());
+        compoundTag.putInt("replenishTickCounter", getReplenishTickCounter());
+        compoundTag.putInt("throwCoolDown", getFlareThrowCoolDown());
+        compoundTag.putInt("color", getFlareColor());
+        compoundTag.putInt("flaresThrown", getFlaresThrown());
+        return compoundTag;
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt)
+    public void deserializeNBT(CompoundTag compoundTag)
     {
-        setStoredFlares(nbt.getInt("flareCount"));
-        setReplenishTickCounter(nbt.getInt("replenishTickCounter"));
-        setFlareThrowCoolDown(nbt.getInt("throwCoolDown"));
-        setFlareColor(nbt.getInt("color"));
-        setFlaresThrown(nbt.getInt("flaresThrown"));
+        setStoredFlares(compoundTag.getInt("flareCount"));
+        setReplenishTickCounter(compoundTag.getInt("replenishTickCounter"));
+        setFlareThrowCoolDown(compoundTag.getInt("throwCoolDown"));
+        setFlareColor(compoundTag.getInt("color"));
+        setFlaresThrown(compoundTag.getInt("flaresThrown"));
     }
 
     /**

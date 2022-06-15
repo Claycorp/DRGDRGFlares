@@ -1,13 +1,13 @@
 package net.doubledoordev.drgflares.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 import static net.doubledoordev.drgflares.DRGFlares.MODID;
-import static net.minecraft.entity.EntityClassification.MISC;
+import static net.minecraft.world.entity.MobCategory.MISC;
 
 public class EntityRegistry
 {

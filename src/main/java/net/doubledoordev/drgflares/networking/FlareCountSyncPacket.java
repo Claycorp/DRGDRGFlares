@@ -2,8 +2,8 @@ package net.doubledoordev.drgflares.networking;
 
 import java.util.function.Supplier;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
 
 import net.doubledoordev.drgflares.ClientEventHandler;
 import net.doubledoordev.drgflares.capability.FlareDataCap;
@@ -12,7 +12,7 @@ public class FlareCountSyncPacket
 {
     int flareCount;
 
-    public FlareCountSyncPacket(PacketBuffer buffer)
+    public FlareCountSyncPacket(FriendlyByteBuf buffer)
     {
         flareCount = buffer.readInt();
     }
@@ -22,16 +22,14 @@ public class FlareCountSyncPacket
         this.flareCount = flareCount;
     }
 
-    void encode(PacketBuffer buffer)
+    void encode(FriendlyByteBuf buffer)
     {
         buffer.writeInt(flareCount);
     }
 
     void handle(Supplier<NetworkEvent.Context> contextSupplier)
     {
-        contextSupplier.get().enqueueWork(() -> {
-            ClientEventHandler.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setStoredFlares(flareCount));
-        });
+        contextSupplier.get().enqueueWork(() -> ClientEventHandler.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setStoredFlares(flareCount)));
         contextSupplier.get().setPacketHandled(true);
     }
 

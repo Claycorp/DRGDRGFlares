@@ -4,24 +4,28 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 
-public class FakeLightBlock extends Block
+public class FakeLightBlock extends BaseEntityBlock
 {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
@@ -32,13 +36,13 @@ public class FakeLightBlock extends Block
 
     @Override
     @ParametersAreNonnullByDefault
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader blockReader, BlockPos pos)
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos)
     {
         return true;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder)
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
     {
         builder.add(LIT);
     }
@@ -46,55 +50,60 @@ public class FakeLightBlock extends Block
     @Override
     @Nonnull
     @ParametersAreNonnullByDefault
-    public BlockRenderType getRenderShape(BlockState state)
+    public RenderShape getRenderShape(BlockState state)
     {
         // Do this so we can get visible light blocks.
         if (DRGFlaresConfig.GENERALCONFIG.lightBlockDebug.get())
         {
-            return BlockRenderType.MODEL;
+            return RenderShape.MODEL;
         }
-        else return BlockRenderType.INVISIBLE;
+        else return RenderShape.INVISIBLE;
     }
 
+    @SuppressWarnings("deprecation")
     @Nonnull
     @ParametersAreNonnullByDefault
     @Override
-    public VoxelShape getInteractionShape(BlockState state, IBlockReader world, BlockPos pos)
+    public VoxelShape getInteractionShape(BlockState state, BlockGetter world, BlockPos pos)
     {
-        return VoxelShapes.empty();
+        return Shapes.empty();
     }
 
+    @SuppressWarnings("deprecation")
     @ParametersAreNonnullByDefault
     @OnlyIn(Dist.CLIENT)
-    public float getShadeBrightness(BlockState state, IBlockReader blockReader, BlockPos pos)
+    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos)
     {
         return 1.0F;
     }
 
+    @SuppressWarnings("deprecation")
     @Nonnull
     @ParametersAreNonnullByDefault
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader level, BlockPos pos, ISelectionContext selectionContext)
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext collisionContext)
     {
-        return VoxelShapes.empty();
+        return Shapes.empty();
     }
 
     @Override
-    public int getLightValue(BlockState state, IBlockReader world, BlockPos pos)
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos)
     {
         return DRGFlaresConfig.GENERALCONFIG.flareLightLevel.get();
     }
 
+    @ParametersAreNonnullByDefault
     @Override
-    public boolean hasTileEntity(BlockState state)
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
     {
-        return true;
+        return new FakeLightBlockEntity(pos, state);
     }
 
+    @ParametersAreNonnullByDefault
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world)
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType)
     {
-        return new FakeLightBlockEntity();
+        return level.isClientSide ? null : createTickerHelper(blockEntityType, BlockRegistry.FAKE_LIGHT_BE.get(), FakeLightBlockEntity::tick);
     }
 }

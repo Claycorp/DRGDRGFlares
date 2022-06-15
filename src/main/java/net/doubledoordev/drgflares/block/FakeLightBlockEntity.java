@@ -4,116 +4,98 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 
-public class FakeLightBlockEntity extends TileEntity implements ITickableTileEntity
+public class FakeLightBlockEntity extends BlockEntity
 {
     int lightDecayTime = DRGFlaresConfig.GENERALCONFIG.lightDecayTime.get();
     int nextCheckIn = DRGFlaresConfig.GENERALCONFIG.noSourceDecayTime.get();
     int tickCounter;
 
-    public FakeLightBlockEntity(TileEntityType<?> tileEntityType)
+    public static void tick(Level level, BlockPos pos, BlockState state, FakeLightBlockEntity blockEntity)
     {
-        super(tileEntityType);
-    }
-
-    public FakeLightBlockEntity()
-    {
-        this(BlockRegistry.FAKE_LIGHT_BE.get());
-    }
-
-    @Override
-    public void tick()
-    {
-        if (!(level != null && level.isClientSide()))
+        if (level != null && !level.isClientSide())
         {
-            BlockState state = level != null ? level.getBlockState(worldPosition) : null;
-
             // Make sure our block is our block.
-            if (state != null && state.getBlock().is(BlockRegistry.FAKE_LIGHT.get()))
+            if (state.is(BlockRegistry.FAKE_LIGHT.get()))
             {
                 // Check if we lost our entity for too long & remove block dead.
-                if (nextCheckIn == 0)
+                if (blockEntity.nextCheckIn == 0)
                 {
-                    level.setBlockAndUpdate(worldPosition, Blocks.AIR.defaultBlockState());
-                    level.removeBlockEntity(worldPosition);
+                    level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+                    level.removeBlockEntity(pos);
                 }
 
                 // Check our light decay time, turn it off after it's dead.
-                if (lightDecayTime <= tickCounter)
+                if (blockEntity.lightDecayTime <= blockEntity.tickCounter)
                 {
-                    level.setBlockAndUpdate(worldPosition, state.setValue(FakeLightBlock.LIT, false));
-                    setChanged();
+                    level.setBlockAndUpdate(pos, state.setValue(FakeLightBlock.LIT, false));
+                    blockEntity.setChanged();
                 }
-                tickCounter++;
+                blockEntity.tickCounter++;
 
                 // Prevent the check from going negative.
-                if (nextCheckIn > 0)
-                    nextCheckIn--;
+                if (blockEntity.nextCheckIn > 0)
+                    blockEntity.nextCheckIn--;
             }
             else
             {
-                if ((level != null ? level.getBlockEntity(worldPosition) : null) != null)
-                    level.removeBlockEntity(worldPosition);
+                if (level.getBlockEntity(pos) != null)
+                    level.removeBlockEntity(pos);
             }
         }
     }
 
-    @Override
-    @ParametersAreNonnullByDefault
-    public void load(BlockState state, CompoundNBT compoundNBT)
+    public FakeLightBlockEntity(BlockPos pos, BlockState state)
     {
-        super.load(state, compoundNBT);
-        lightDecayTime = compoundNBT.getInt("lightDecayTime");
-        nextCheckIn = compoundNBT.getInt("nextCheckIn");
-        tickCounter = compoundNBT.getInt("tickCounter");
+        super(BlockRegistry.FAKE_LIGHT_BE.get(), pos, state);
     }
 
     @Override
-    @Nonnull
-    public CompoundNBT save(CompoundNBT compoundNBT)
+    @ParametersAreNonnullByDefault
+    public void load(CompoundTag compoundTag)
     {
-        compoundNBT.putInt("lightDecayTime", lightDecayTime);
-        compoundNBT.putInt("nextCheckIn", nextCheckIn);
-        compoundNBT.putInt("tickCounter", tickCounter);
+        super.load(compoundTag);
+        lightDecayTime = compoundTag.getInt("lightDecayTime");
+        nextCheckIn = compoundTag.getInt("nextCheckIn");
+        tickCounter = compoundTag.getInt("tickCounter");
+    }
 
-        return super.save(compoundNBT);
+    @Override
+    @ParametersAreNonnullByDefault
+    public void saveAdditional(CompoundTag compoundTag)
+    {
+        super.saveAdditional(compoundTag);
+        compoundTag.putInt("lightDecayTime", lightDecayTime);
+        compoundTag.putInt("nextCheckIn", nextCheckIn);
+        compoundTag.putInt("tickCounter", tickCounter);
     }
 
     @Nullable
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket()
+    public ClientboundBlockEntityDataPacket getUpdatePacket()
     {
-        return new SUpdateTileEntityPacket(this.worldPosition, 3, this.getUpdateTag());
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
     @Nonnull
-    public CompoundNBT getUpdateTag()
+    public CompoundTag getUpdateTag()
     {
-        return this.save(new CompoundNBT());
+        return this.saveWithFullMetadata();
     }
 
-    /**
-     * Called when you receive a TileEntityData packet for the location this
-     * TileEntity is currently in. On the client, the NetworkManager will always
-     * be the remote server. On the server, it will be whomever is responsible for
-     * sending the packet.
-     *
-     * @param net The NetworkManager the packet originated from
-     * @param pkt The data packet
-     */
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt)
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt)
     {
         deserializeNBT(pkt.getTag());
         setChanged();

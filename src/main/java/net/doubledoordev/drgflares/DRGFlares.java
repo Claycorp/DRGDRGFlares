@@ -1,16 +1,15 @@
 package net.doubledoordev.drgflares;
 
 import java.util.Locale;
-import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.TickEvent;
@@ -20,14 +19,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.doubledoordev.drgflares.block.BlockRegistry;
 import net.doubledoordev.drgflares.capability.FlareData;
 import net.doubledoordev.drgflares.capability.FlareDataCap;
-import net.doubledoordev.drgflares.capability.NoopStorage;
 import net.doubledoordev.drgflares.entity.EntityRegistry;
 import net.doubledoordev.drgflares.networking.FlareCountSyncPacket;
 import net.doubledoordev.drgflares.networking.PacketHandler;
@@ -47,7 +44,7 @@ public class DRGFlares
     @SubscribeEvent
     public static void attachFlareCapability(AttachCapabilitiesEvent<Entity> event)
     {
-        if (event.getObject() instanceof PlayerEntity)
+        if (event.getObject() instanceof Player)
         {
             event.addCapability(CAPABILITY_FLARES, new FlareData());
         }
@@ -66,7 +63,7 @@ public class DRGFlares
                     flareCap.setStoredFlares(maxFlares);
                     flareCap.setFlareThrowCoolDown(0);
                     flareCap.setReplenishTickCounter(0);
-                    PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.player), new FlareCountSyncPacket(maxFlares));
+                    PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) event.player), new FlareCountSyncPacket(maxFlares));
                     return;
                 }
 
@@ -75,7 +72,7 @@ public class DRGFlares
                     int totalFlares = storedFlares + DRGFlaresConfig.GENERALCONFIG.flareReplenishQuantity.get();
 
                     flareCap.setStoredFlares(totalFlares);
-                    PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.player), new FlareCountSyncPacket(totalFlares));
+                    PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) event.player), new FlareCountSyncPacket(totalFlares));
                     flareCap.setReplenishTickCounter(0);
                 }
                 flareCap.incrementReplenishTickCounter();
@@ -94,9 +91,7 @@ public class DRGFlares
 
         if (message.contains("setflarecolor"))
         {
-            event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
-                flareCap.setFlareColor(stringToColorInt(message.substring(13)));
-            });
+            event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setFlareColor(stringToColorInt(message.substring(13))));
             event.setCanceled(true);
         }
     }
@@ -105,26 +100,19 @@ public class DRGFlares
     public static void playerJoin(EntityJoinWorldEvent event)
     {
         // need this to sync flare data on join or the client is stupid and displays max.
-        if (!event.getWorld().isClientSide && event.getEntity() instanceof PlayerEntity)
+        if (!event.getWorld().isClientSide && event.getEntity() instanceof Player player)
         {
-            PlayerEntity player = (PlayerEntity) event.getEntity();
             player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                 int storedFlares = flareCap.getStoredFlares();
-                PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new FlareCountSyncPacket(storedFlares));
+                PacketHandler.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new FlareCountSyncPacket(storedFlares));
             });
         }
     }
 
-    /**
-     * Avoids IDE warnings by returning null for fields that are injected in by forge.
-     *
-     * @return Not null!
-     */
-    @Nonnull
-    @SuppressWarnings("ConstantConditions")
-    public static <T> T notNull()
+    @SubscribeEvent
+    public static void registerCapabilities(RegisterCapabilitiesEvent event)
     {
-        return null;
+        event.register(FlareData.class);
     }
 
     public DRGFlares()
@@ -133,9 +121,6 @@ public class DRGFlares
 
         // Register config.
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DRGFlaresConfig.spec);
-
-        // Register the few bits of start up stuff.
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
@@ -146,14 +131,6 @@ public class DRGFlares
         EntityRegistry.ENTITY_DEFERRED.register(modEventBus);
 
         PacketHandler.init();
-    }
-
-    private void setup(final FMLCommonSetupEvent event)
-    {
-        // Register flare cap so it exists.
-        CapabilityManager.INSTANCE.register(FlareData.class, new NoopStorage<>(), () -> {
-            throw new UnsupportedOperationException("Creating default instances is not supported. Why would you ever do this");
-        });
     }
 
     public static int stringToColorInt(String colorString)
@@ -207,7 +184,7 @@ public class DRGFlares
      * <p>
      * The integer that is returned by <code>HSBtoRGB</code> encodes the
      * value of a color in bits 0-23 of an integer value that is the same
-     * format used by the method {@link #getRGB() getRGB}.
+     * format used by the method .
      * This integer can be supplied as an argument to the
      * <code>Color</code> constructor that takes a single integer argument.
      *
@@ -234,36 +211,42 @@ public class DRGFlares
             float t = brightness * (1.0f - (saturation * (1.0f - f)));
             switch ((int) h)
             {
-                case 0:
+                case 0 ->
+                {
                     r = (int) (brightness * 255.0f + 0.5f);
                     g = (int) (t * 255.0f + 0.5f);
                     b = (int) (p * 255.0f + 0.5f);
-                    break;
-                case 1:
+                }
+                case 1 ->
+                {
                     r = (int) (q * 255.0f + 0.5f);
                     g = (int) (brightness * 255.0f + 0.5f);
                     b = (int) (p * 255.0f + 0.5f);
-                    break;
-                case 2:
+                }
+                case 2 ->
+                {
                     r = (int) (p * 255.0f + 0.5f);
                     g = (int) (brightness * 255.0f + 0.5f);
                     b = (int) (t * 255.0f + 0.5f);
-                    break;
-                case 3:
+                }
+                case 3 ->
+                {
                     r = (int) (p * 255.0f + 0.5f);
                     g = (int) (q * 255.0f + 0.5f);
                     b = (int) (brightness * 255.0f + 0.5f);
-                    break;
-                case 4:
+                }
+                case 4 ->
+                {
                     r = (int) (t * 255.0f + 0.5f);
                     g = (int) (p * 255.0f + 0.5f);
                     b = (int) (brightness * 255.0f + 0.5f);
-                    break;
-                case 5:
+                }
+                case 5 ->
+                {
                     r = (int) (brightness * 255.0f + 0.5f);
                     g = (int) (p * 255.0f + 0.5f);
                     b = (int) (q * 255.0f + 0.5f);
-                    break;
+                }
             }
         }
         return 0xff000000 | (r << 16) | (g << 8) | (b);

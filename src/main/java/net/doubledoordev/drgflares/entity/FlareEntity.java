@@ -1,85 +1,79 @@
 package net.doubledoordev.drgflares.entity;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.projectile.ThrowableEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 import net.doubledoordev.drgflares.block.BlockRegistry;
 import net.doubledoordev.drgflares.block.FakeLightBlock;
 import net.doubledoordev.drgflares.block.FakeLightBlockEntity;
 
-public class FlareEntity extends ThrowableEntity
+public class FlareEntity extends ThrowableProjectile
 {
     BlockPos lightBlockPos = null;
     boolean shouldSpawnFakeLights = true;
     BlockPos lastHitBlock = new BlockPos(0, 256, 0);
-    public final static DataParameter<Float> X_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
-    public final static DataParameter<Float> Y_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
-    public final static DataParameter<Float> Z_PHY_ROT = EntityDataManager.defineId(FlareEntity.class, DataSerializers.FLOAT);
-    public final static DataParameter<Integer> COLOR = EntityDataManager.defineId(FlareEntity.class, DataSerializers.INT);
-    Vector3d previousPosition = Vector3d.ZERO;
+    public final static EntityDataAccessor<Float> X_PHY_ROT = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.FLOAT);
+    public final static EntityDataAccessor<Float> Y_PHY_ROT = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.FLOAT);
+    public final static EntityDataAccessor<Float> Z_PHY_ROT = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.FLOAT);
+    public final static EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.INT);
+    Vec3 previousPosition = Vec3.ZERO;
 
-    public FlareEntity(EntityType<? extends ThrowableEntity> entityType, World world)
+    public FlareEntity(EntityType<? extends ThrowableProjectile> entityType, Level level)
     {
-        super(entityType, world);
+        super(entityType, level);
     }
 
-    public FlareEntity(World world, LivingEntity livingEntity)
+    public FlareEntity(Level level, LivingEntity livingEntity)
     {
-        super(EntityRegistry.FLARE_ENTITY.get(), livingEntity, world);
+        super(EntityRegistry.FLARE_ENTITY.get(), livingEntity, level);
     }
 
     @Override
     public void tick()
     {
         //Can't get the movement force if there's no previous position to work from or if they are the same.
-        if (!previousPosition.equals(Vector3d.ZERO) || !previousPosition.equals(position()))
+        if (!previousPosition.equals(Vec3.ZERO) || !previousPosition.equals(position()))
         {
             //Find out what the "force" behind the object is by subtracting the two positions.
-            Vector3d movementForce = previousPosition.subtract(position());
+            Vec3 movementForce = previousPosition.subtract(position());
             //Only rotate if there's force.
-            if (!movementForce.equals(Vector3d.ZERO))
+            if (!movementForce.equals(Vec3.ZERO))
             {
                 //Set the entity data so the rendering can rotate the object and then this data can be stored for later use to keep objects rotated correctly on reload.
-                this.entityData.set(X_PHY_ROT, (float) (entityData.get(X_PHY_ROT) + random.nextFloat() * movementForce.x));
-                this.entityData.set(Y_PHY_ROT, (float) (entityData.get(Y_PHY_ROT) + random.nextFloat() * movementForce.y));
-                this.entityData.set(Z_PHY_ROT, (float) (entityData.get(Z_PHY_ROT) + random.nextFloat() * movementForce.z));
+                entityData.set(X_PHY_ROT, (float) (entityData.get(X_PHY_ROT) + random.nextFloat() * movementForce.x));
+                entityData.set(Y_PHY_ROT, (float) (entityData.get(Y_PHY_ROT) + random.nextFloat() * movementForce.y));
+                entityData.set(Z_PHY_ROT, (float) (entityData.get(Z_PHY_ROT) + random.nextFloat() * movementForce.z));
             }
         }
         previousPosition = position();
 
-        //TODO: Replace in 1.17+
-        if (getY() <= 0)
+        if (this.getY() < level.getMinBuildHeight())
             this.kill();
         if (!level.isClientSide())
         {
-
-            if (level.getBlockState(this.getOnPos()).is(Blocks.AIR))
-            {
-                this.setNoGravity(false);
-            }
+//            if (!level.getBlockState(getOnPos()).is(Blocks.AIR))
+//            {
+//                setNoGravity(false);
+//            }
 
             // Make sure to call the super, so we actually move unless we plan on rewriting the whole movement lot.
             super.tick();
@@ -106,19 +100,11 @@ public class FlareEntity extends ThrowableEntity
         }
     }
 
-    @Override
-    protected float getGravity()
-    {
-        return DRGFlaresConfig.GENERALCONFIG.flareGravity.get().floatValue();
-    }
-
-    // You need this because vanilla be stupid and doesn't give a shit.
-    @Override
-    @Nonnull
-    public IPacket<?> getAddEntityPacket()
-    {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
+//    @Override
+//    protected float getGravity()
+//    {
+//        return DRGFlaresConfig.GENERALCONFIG.flareGravity.get().floatValue();
+//    }
 
     public void setTEDataOrBlock(BlockPos blockPos)
     {
@@ -160,7 +146,7 @@ public class FlareEntity extends ThrowableEntity
         // This check is done first and separate from the extended search as it's most likely to contain a valid space.
         for (Direction facing : Direction.values())
         {
-            if (level.getBlockState(entityPos.relative(facing)).isAir() || level.getBlockState(entityPos.relative(facing)).getBlock().is(lightBlock))
+            if (level.getBlockState(entityPos.relative(facing)).isAir() || level.getBlockState(entityPos.relative(facing)).is(lightBlock))
             {
                 return entityPos.relative(facing);
             }
@@ -170,7 +156,8 @@ public class FlareEntity extends ThrowableEntity
         for (Direction firstStep : Direction.values())
             for (Direction secondStep : Direction.values())
             {
-                if (level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).isAir() || level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).getBlock().is(lightBlock))
+                if (level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).isAir() ||
+                        level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).is(lightBlock))
                 {
                     return entityPos.relative(firstStep).relative(secondStep);
                 }
@@ -181,59 +168,58 @@ public class FlareEntity extends ThrowableEntity
 
     @Override
     @ParametersAreNonnullByDefault
-    public void addAdditionalSaveData(CompoundNBT compoundNBT)
+    public void addAdditionalSaveData(CompoundTag compoundTag)
     {
-        super.addAdditionalSaveData(compoundNBT);
+        super.addAdditionalSaveData(compoundTag);
         if (lightBlockPos != null)
-            NBTUtil.writeBlockPos(lightBlockPos);
-        compoundNBT.putFloat("xPhyRot", this.entityData.get(X_PHY_ROT));
-        compoundNBT.putFloat("yPhyRot", this.entityData.get(Y_PHY_ROT));
-        compoundNBT.putFloat("zPhyRot", this.entityData.get(Z_PHY_ROT));
-        compoundNBT.putInt("color", this.entityData.get(COLOR));
+            NbtUtils.writeBlockPos(lightBlockPos);
+        compoundTag.putFloat("xPhyRot", this.entityData.get(X_PHY_ROT));
+        compoundTag.putFloat("yPhyRot", this.entityData.get(Y_PHY_ROT));
+        compoundTag.putFloat("zPhyRot", this.entityData.get(Z_PHY_ROT));
+        compoundTag.putInt("color", this.entityData.get(COLOR));
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void readAdditionalSaveData(CompoundNBT compoundNBT)
+    public void readAdditionalSaveData(CompoundTag compoundTag)
     {
-        super.readAdditionalSaveData(compoundNBT);
-        lightBlockPos = NBTUtil.readBlockPos(compoundNBT);
-        this.entityData.set(X_PHY_ROT, compoundNBT.getFloat("xPhyRot"));
-        this.entityData.set(Y_PHY_ROT, compoundNBT.getFloat("yPhyRot"));
-        this.entityData.set(Z_PHY_ROT, compoundNBT.getFloat("zPhyRot"));
-        this.entityData.set(COLOR, compoundNBT.getInt("color"));
+        super.readAdditionalSaveData(compoundTag);
+        lightBlockPos = NbtUtils.readBlockPos(compoundTag);
+        this.entityData.set(X_PHY_ROT, compoundTag.getFloat("xPhyRot"));
+        this.entityData.set(Y_PHY_ROT, compoundTag.getFloat("yPhyRot"));
+        this.entityData.set(Z_PHY_ROT, compoundTag.getFloat("zPhyRot"));
+        this.entityData.set(COLOR, compoundTag.getInt("color"));
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    protected void onHitEntity(EntityRayTraceResult entityRayTraceResult)
+    protected void onHitEntity(EntityHitResult hitResult)
     {
-        super.onHitEntity(entityRayTraceResult);
-        Entity entity = entityRayTraceResult.getEntity();
+        super.onHitEntity(hitResult);
+        Entity entity = hitResult.getEntity();
 
-        if (!this.level.isClientSide && entity instanceof LivingEntity)
+        if (!this.level.isClientSide && entity instanceof LivingEntity livingEntity)
         {
-            LivingEntity livingEntity = (LivingEntity) entity;
             if (DRGFlaresConfig.GENERALCONFIG.hitEntityGlows.get())
-                livingEntity.addEffect(new EffectInstance(Effects.GLOWING, DRGFlaresConfig.GENERALCONFIG.entityGlowingTime.get(), 0, false, false));
+                livingEntity.addEffect(new MobEffectInstance(MobEffects.GLOWING, DRGFlaresConfig.GENERALCONFIG.entityGlowingTime.get(), 0, false, false));
 
             this.level.broadcastEntityEvent(this, (byte) 3);
-            this.remove();
+            this.discard();
         }
     }
 
     @ParametersAreNonnullByDefault
     @Override
-    protected void onHitBlock(BlockRayTraceResult rayTraceResult)
+    protected void onHitBlock(BlockHitResult hitResult)
     {
-        Vector3d vec = this.getDeltaMovement();
-        super.onHitBlock(rayTraceResult);
+        Vec3 vec = this.getDeltaMovement();
+        super.onHitBlock(hitResult);
 
-        BlockPos hitPos = rayTraceResult.getBlockPos();
+        BlockPos hitPos = hitResult.getBlockPos();
 
         if (!lastHitBlock.equals(hitPos) && !level.getBlockState(hitPos).getCollisionShape(level, hitPos).isEmpty())
         {
-            Direction directionOpposite = rayTraceResult.getDirection().getOpposite();
+            Direction directionOpposite = hitResult.getDirection().getOpposite();
             double bounceDampeningModifier = DRGFlaresConfig.GENERALCONFIG.bounceModifier.get();
 
             lastHitBlock = hitPos;
@@ -244,22 +230,14 @@ public class FlareEntity extends ThrowableEntity
 
             switch (directionOpposite)
             {
-                case UP:
-                case DOWN:
-                    setDeltaMovement(vecX, -vecY, vecZ);
-                    break;
-                case EAST:
-                case WEST:
-                    setDeltaMovement(-vecX, vecY, vecZ);
-                    break;
-                case NORTH:
-                case SOUTH:
-                    setDeltaMovement(vecX, vecY, -vecZ);
+                case UP, DOWN -> setDeltaMovement(vecX, -vecY, vecZ);
+                case EAST, WEST -> setDeltaMovement(-vecX, vecY, vecZ);
+                case NORTH, SOUTH -> setDeltaMovement(vecX, vecY, -vecZ);
             }
         }
         else if (lastHitBlock.equals(hitPos))
         {
-            setDeltaMovement(Vector3d.ZERO);
+            setDeltaMovement(Vec3.ZERO);
             setNoGravity(true);
         }
     }

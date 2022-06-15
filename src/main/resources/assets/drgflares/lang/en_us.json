@@ -1,5 +1,7 @@
 {
+  "entity.drgeflares.flare": "Flare",
   "drgflares.key.throwflare": "Throw Flare Key",
+  "drgflares.menu.key.category.throwFlare": "Flares",
   "drgflares.config.noSourceDecayTime": "How fast in ticks light sources with no entity are removed. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
   "drgflares.config.flareQuantity": "How many flares a single player can hold.",
   "drgflares.config.flareReplenishTime": "Time it takes for a flare to be replenished back to the pile. Lower values are faster. 20 ticks = 1 second, 1200 ticks = 1 minute, 72000 ticks = 1 hour",
