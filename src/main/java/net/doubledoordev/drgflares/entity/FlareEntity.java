@@ -17,6 +17,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -70,10 +72,11 @@ public class FlareEntity extends ThrowableProjectile
             this.kill();
         if (!level.isClientSide())
         {
-//            if (!level.getBlockState(getOnPos()).is(Blocks.AIR))
-//            {
-//                setNoGravity(false);
-//            }
+            // Enable gravity again if the block is not on the ground.
+            if (isNoGravity() && !getDeltaMovement().equals(Vec3.ZERO) || !isOnGround())
+            {
+                setNoGravity(false);
+            }
 
             // Make sure to call the super, so we actually move unless we plan on rewriting the whole movement lot.
             super.tick();
@@ -125,7 +128,11 @@ public class FlareEntity extends ThrowableProjectile
             }
             else
             {
-                level.setBlockAndUpdate(blockPos, BlockRegistry.FAKE_LIGHT.get().defaultBlockState());
+                // make sure our fluid doesn't have a block in it already and we have a source.
+                if (level.getBlockState(blockPos).getFluidState().isSource())
+                    level.setBlockAndUpdate(blockPos, BlockRegistry.FAKE_LIGHT.get().defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true));
+                else
+                    level.setBlockAndUpdate(blockPos, BlockRegistry.FAKE_LIGHT.get().defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, false));
                 lightBlockPos = blockPos;
             }
         }
@@ -133,8 +140,10 @@ public class FlareEntity extends ThrowableProjectile
 
     public BlockPos findLightOrSpace(BlockPos entityPos, Block lightBlock)
     {
+        BlockState state = level.getBlockState(entityPos);
 
-        if (level.getBlockState(entityPos).isAir() || level.getBlockState(entityPos).is(lightBlock))
+        if (state.isAir() || state.is(lightBlock) ||
+                (state.getFluidState().isSource() && !state.hasProperty(BlockStateProperties.WATERLOGGED)))
         {
             return entityPos;
         }
@@ -142,11 +151,13 @@ public class FlareEntity extends ThrowableProjectile
         // if all else failed, now we search for a spot.
         // Really couldn't think of a better way to do this.
 
-        // Check around the space we are in a + shape for any air or light blocks.
+        // Check around the space we are in a + shape for any air, water or light blocks.
         // This check is done first and separate from the extended search as it's most likely to contain a valid space.
         for (Direction facing : Direction.values())
         {
-            if (level.getBlockState(entityPos.relative(facing)).isAir() || level.getBlockState(entityPos.relative(facing)).is(lightBlock))
+            BlockState stateCardinalRotation = level.getBlockState(entityPos.relative(facing));
+            if (stateCardinalRotation.isAir() || stateCardinalRotation.is(lightBlock) ||
+                    (stateCardinalRotation.getFluidState().isSource() && !stateCardinalRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
             {
                 return entityPos.relative(facing);
             }
@@ -156,8 +167,9 @@ public class FlareEntity extends ThrowableProjectile
         for (Direction firstStep : Direction.values())
             for (Direction secondStep : Direction.values())
             {
-                if (level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).isAir() ||
-                        level.getBlockState(entityPos.relative(firstStep).relative(secondStep)).is(lightBlock))
+                BlockState stateComplexRotation = level.getBlockState(entityPos.relative(firstStep).relative(secondStep));
+                if (stateComplexRotation.isAir() || stateComplexRotation.is(lightBlock) ||
+                        (stateComplexRotation.getFluidState().isSource() && !stateComplexRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
                 {
                     return entityPos.relative(firstStep).relative(secondStep);
                 }

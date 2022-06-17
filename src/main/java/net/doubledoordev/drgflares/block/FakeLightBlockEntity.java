@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 
@@ -21,7 +22,7 @@ public class FakeLightBlockEntity extends BlockEntity
     int nextCheckIn = DRGFlaresConfig.GENERALCONFIG.noSourceDecayTime.get();
     int tickCounter;
 
-    public static void tick(Level level, BlockPos pos, BlockState state, FakeLightBlockEntity blockEntity)
+    public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, FakeLightBlockEntity blockEntity)
     {
         if (level != null && !level.isClientSide())
         {
@@ -31,7 +32,10 @@ public class FakeLightBlockEntity extends BlockEntity
                 // Check if we lost our entity for too long & remove block dead.
                 if (blockEntity.nextCheckIn == 0)
                 {
-                    level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+                    if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED))
+                        level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+                    else
+                        level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
                     level.removeBlockEntity(pos);
                 }
 
