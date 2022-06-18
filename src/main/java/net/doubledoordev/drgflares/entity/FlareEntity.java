@@ -19,6 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -143,7 +144,8 @@ public class FlareEntity extends ThrowableProjectile
         BlockState state = level.getBlockState(entityPos);
 
         if (state.isAir() || state.is(lightBlock) ||
-                (state.getFluidState().isSource() && !state.hasProperty(BlockStateProperties.WATERLOGGED)))
+                (state.getFluidState().is(Fluids.WATER) && state.getFluidState().isSource() &&
+                        !state.hasProperty(BlockStateProperties.WATERLOGGED)))
         {
             return entityPos;
         }
@@ -157,7 +159,8 @@ public class FlareEntity extends ThrowableProjectile
         {
             BlockState stateCardinalRotation = level.getBlockState(entityPos.relative(facing));
             if (stateCardinalRotation.isAir() || stateCardinalRotation.is(lightBlock) ||
-                    (stateCardinalRotation.getFluidState().isSource() && !stateCardinalRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
+                    (stateCardinalRotation.getFluidState().is(Fluids.WATER) && stateCardinalRotation.getFluidState().isSource() &&
+                            !stateCardinalRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
             {
                 return entityPos.relative(facing);
             }
@@ -169,7 +172,8 @@ public class FlareEntity extends ThrowableProjectile
             {
                 BlockState stateComplexRotation = level.getBlockState(entityPos.relative(firstStep).relative(secondStep));
                 if (stateComplexRotation.isAir() || stateComplexRotation.is(lightBlock) ||
-                        (stateComplexRotation.getFluidState().isSource() && !stateComplexRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
+                        (stateComplexRotation.getFluidState().is(Fluids.WATER) && stateComplexRotation.getFluidState().isSource() &&
+                                !stateComplexRotation.hasProperty(BlockStateProperties.WATERLOGGED)))
                 {
                     return entityPos.relative(firstStep).relative(secondStep);
                 }
