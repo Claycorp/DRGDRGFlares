@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,6 +19,8 @@ import com.mojang.math.Vector3f;
 import net.doubledoordev.drgflares.DRGFlares;
 import net.doubledoordev.drgflares.DRGFlaresConfig;
 import net.doubledoordev.drgflares.entity.FlareEntity;
+
+import static net.doubledoordev.drgflares.entity.FlareEntity.*;
 
 public class FlareRenderer extends EntityRenderer<FlareEntity>
 {
@@ -32,14 +35,33 @@ public class FlareRenderer extends EntityRenderer<FlareEntity>
 
     @ParametersAreNonnullByDefault
     @Override
-    public void render(FlareEntity entity, float p_225623_2_, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int p_225623_6_)
+    public void render(FlareEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight)
     {
         poseStack.pushPose();
+        // Moved the following block of entity rotation setting here to use partial ticks to smooth out the rotations. MUCH BETTER.
+        //Can't get the movement force if there's no previous position to work from or if they are the same.
+        if (!entity.previousPosition.equals(Vec3.ZERO) || !entity.previousPosition.equals(entity.position()))
+        {
+            //Find out what the "force" behind the object is by subtracting the two positions.
+            Vec3 movementForce = entity.previousPosition.subtract(entity.position());
+            //Only rotate if there's force.
+            if (!movementForce.equals(Vec3.ZERO))
+            {
+                //Set the entity data so the rendering can rotate the object and then this data can be stored for later use to keep objects rotated correctly on reload.
+                entity.getEntityData().set(X_PHY_ROT, (float) (entity.getEntityData().get(X_PHY_ROT) + partialTicks * movementForce.x));
+                entity.getEntityData().set(Y_PHY_ROT, (float) (entity.getEntityData().get(Y_PHY_ROT) + partialTicks * movementForce.y));
+                entity.getEntityData().set(Z_PHY_ROT, (float) (entity.getEntityData().get(Z_PHY_ROT) + partialTicks * movementForce.z));
+            }
+        }
+        entity.previousPosition = entity.position();
+
+        // Translate the render up so the rotation point is moved into where the physical center is.
+        poseStack.translate(0, .2, 0);
 
         //Get the force from the entity.
-        float physicsXForce = entity.getEntityData().get(FlareEntity.X_PHY_ROT);
-        float physicsYForce = entity.getEntityData().get(FlareEntity.Y_PHY_ROT);
-        float physicsZForce = entity.getEntityData().get(FlareEntity.Z_PHY_ROT);
+        float physicsXForce = entity.getEntityData().get(X_PHY_ROT);
+        float physicsYForce = entity.getEntityData().get(Y_PHY_ROT);
+        float physicsZForce = entity.getEntityData().get(Z_PHY_ROT);
 
         //Do some maths that give us some nicer rotations.
         float rotationDampening = DRGFlaresConfig.GENERALCONFIG.flareRotationStrength.get().floatValue();
@@ -51,6 +73,9 @@ public class FlareRenderer extends EntityRenderer<FlareEntity>
         poseStack.mulPose((physicsXForce > 0) ? Vector3f.XP.rotationDegrees(xMovement) : Vector3f.XN.rotationDegrees(-xMovement));
         poseStack.mulPose((physicsYForce > 0) ? Vector3f.YP.rotationDegrees(yMovement) : Vector3f.YN.rotationDegrees(-yMovement));
         poseStack.mulPose((physicsZForce > 0) ? Vector3f.ZP.rotationDegrees(zMovement) : Vector3f.ZN.rotationDegrees(-zMovement));
+
+        // Translate the object back down to place the actual render to match what the physical is doing.
+        poseStack.translate(0, -.2, 0);
 
         VertexConsumer flareVertexBuilder = bufferSource.getBuffer(this.model.renderType(this.getTextureLocation(entity)));
 
@@ -73,21 +98,21 @@ public class FlareRenderer extends EntityRenderer<FlareEntity>
                 red = afloat1[0] * (1.0F - f3) + afloat2[0] * f3;
                 green = afloat1[1] * (1.0F - f3) + afloat2[1] * f3;
                 blue = afloat1[2] * (1.0F - f3) + afloat2[2] * f3;
-                this.model.renderToBuffer(poseStack, flareVertexBuilder, p_225623_6_, OverlayTexture.NO_OVERLAY,
+                this.model.renderToBuffer(poseStack, flareVertexBuilder, packedLight, OverlayTexture.NO_OVERLAY,
                         red,
                         green,
                         blue,
                         1);
                 break;
             }
-            default -> this.model.renderToBuffer(poseStack, flareVertexBuilder, p_225623_6_, OverlayTexture.NO_OVERLAY,
+            default -> this.model.renderToBuffer(poseStack, flareVertexBuilder, packedLight, OverlayTexture.NO_OVERLAY,
                     (flareColor >> 16 & 255) / 255.0F,
                     (flareColor >> 8 & 255) / 255.0F,
                     (flareColor & 255) / 255.0F,
                     1);
         }
         poseStack.popPose();
-        super.render(entity, p_225623_2_, partialTicks, poseStack, bufferSource, p_225623_6_);
+        super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
     }
 
     @ParametersAreNonnullByDefault

@@ -38,7 +38,7 @@ public class FlareEntity extends ThrowableProjectile
     public final static EntityDataAccessor<Float> Y_PHY_ROT = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.FLOAT);
     public final static EntityDataAccessor<Float> Z_PHY_ROT = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.FLOAT);
     public final static EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(FlareEntity.class, EntityDataSerializers.INT);
-    Vec3 previousPosition = Vec3.ZERO;
+    public Vec3 previousPosition = Vec3.ZERO;
 
     public FlareEntity(EntityType<? extends ThrowableProjectile> entityType, Level level)
     {
@@ -53,24 +53,8 @@ public class FlareEntity extends ThrowableProjectile
     @Override
     public void tick()
     {
-        //Can't get the movement force if there's no previous position to work from or if they are the same.
-        if (!previousPosition.equals(Vec3.ZERO) || !previousPosition.equals(position()))
-        {
-            //Find out what the "force" behind the object is by subtracting the two positions.
-            Vec3 movementForce = previousPosition.subtract(position());
-            //Only rotate if there's force.
-            if (!movementForce.equals(Vec3.ZERO))
-            {
-                //Set the entity data so the rendering can rotate the object and then this data can be stored for later use to keep objects rotated correctly on reload.
-                entityData.set(X_PHY_ROT, (float) (entityData.get(X_PHY_ROT) + random.nextFloat() * movementForce.x));
-                entityData.set(Y_PHY_ROT, (float) (entityData.get(Y_PHY_ROT) + random.nextFloat() * movementForce.y));
-                entityData.set(Z_PHY_ROT, (float) (entityData.get(Z_PHY_ROT) + random.nextFloat() * movementForce.z));
-            }
-        }
-        previousPosition = position();
-
-        if (this.getY() < level.getMinBuildHeight())
-            this.kill();
+        if (getY() < level.getMinBuildHeight())
+            kill();
         if (!level.isClientSide())
         {
             // Enable gravity again if the block is not on the ground.
@@ -81,6 +65,7 @@ public class FlareEntity extends ThrowableProjectile
 
             // Make sure to call the super, so we actually move unless we plan on rewriting the whole movement lot.
             super.tick();
+
             // Make sure we have a way to clean up the entities.
             if (tickCount > DRGFlaresConfig.GENERALCONFIG.entityDecayTime.get() + DRGFlaresConfig.GENERALCONFIG.lightDecayTime.get())
                 this.kill();
@@ -103,12 +88,6 @@ public class FlareEntity extends ThrowableProjectile
             }
         }
     }
-
-//    @Override
-//    protected float getGravity()
-//    {
-//        return DRGFlaresConfig.GENERALCONFIG.flareGravity.get().floatValue();
-//    }
 
     public void setTEDataOrBlock(BlockPos blockPos)
     {
