@@ -83,7 +83,7 @@ public class FlareRenderer extends EntityRenderer<FlareEntity>
         switch (flareColor)
         {
             //Color shifting like jeb sheep. Stole from sheep.
-            case 2 ->
+            case -3 ->
             {
                 float red;
                 float green;

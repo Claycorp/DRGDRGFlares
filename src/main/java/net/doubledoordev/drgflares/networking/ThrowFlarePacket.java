@@ -29,10 +29,10 @@ public class ThrowFlarePacket
         switch (flareData.getFlareColor())
         {
             //Spaced colors. "Fixed rainbow"
-            case 1 -> flareEntity.setColor(DRGFlares.HSBtoRGB((flareData.getFlaresThrown() / 360F * 100) * .1f, 1, 1));
+            case -2 -> flareEntity.setColor(DRGFlares.HSBtoRGB((flareData.getFlaresThrown() / 360F * 100) * .1f, 1, 1));
 
             //Random colors.
-            case 3 -> flareEntity.setColor(flareEntity.level.random.nextInt(0xFFFFFF));
+            case -4 -> flareEntity.setColor(flareEntity.level.random.nextInt(0xFFFFFF));
             default -> flareEntity.setColor(flareData.getFlareColor());
         }
         flareEntity.setOwner(player);
@@ -56,7 +56,7 @@ public class ThrowFlarePacket
                 player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                     if (flareCap.getStoredFlares() > 0 && flareCap.getFlareThrowCoolDown() == 0)
                     {
-                        if (flareCap.getFlareColor() == 0)
+                        if (flareCap.getFlareColor() == -1)
                             flareCap.setFlareColor(DRGFlares.stringToColorInt("#c334eb"));
 
                         //If the player is creative throw free flares. If they are spectator & are allowed & they don't need to generate flares, throw em.

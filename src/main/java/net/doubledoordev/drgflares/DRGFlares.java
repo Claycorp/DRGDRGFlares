@@ -4,6 +4,9 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.minecraft.Util;
+import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -91,7 +94,19 @@ public class DRGFlares
 
         if (message.contains("setflarecolor"))
         {
-            event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setFlareColor(stringToColorInt(message.substring(13))));
+            int color = stringToColorInt(message.substring(13));
+
+            String messageToSend = switch (color)
+                    {
+                        case -1 -> "Set flare color to: Default color (#a66ff2)";
+                        case -2 -> "Set flare color to: Fixed rainbow. (rainbow)";
+                        case -3 -> "Set flare color to: Color shift (jeb)";
+                        case -4 -> "Set flare color to: Random color (random)";
+                        default -> "Set flare color to: " + Integer.toHexString(color);
+                    };
+
+            event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setFlareColor(color));
+            event.getPlayer().sendMessage(new TextComponent(messageToSend), ChatType.GAME_INFO, Util.NIL_UUID);
             event.setCanceled(true);
         }
     }
@@ -156,13 +171,13 @@ public class DRGFlares
             switch (preparedColorString)
             {
                 //Numbers are arbitrary but must match what is used in the render method with special renders. Otherwise, a valid color number can be set.
-                case "rainbow":
-                    return 1;
-                case "jeb":
-                    return 2;
+                case "rainbow", "-2":
+                    return -2;
+                case "jeb", "-3":
+                    return -3;
                 //Handled in packet toss as the ID needs to be random per flare not per render frame.
-                case "random":
-                    return 3;
+                case "random", "-4":
+                    return -4;
             }
         }
 
