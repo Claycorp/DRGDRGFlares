@@ -108,7 +108,7 @@ public class FlareEntity extends ThrowableProjectile
             }
             else
             {
-                // make sure our fluid doesn't have a block in it already and we have a source.
+                // make sure our fluid doesn't have a block in it already, and we have a source.
                 if (level.getBlockState(blockPos).getFluidState().isSource())
                     level.setBlockAndUpdate(blockPos, BlockRegistry.FAKE_LIGHT.get().defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true));
                 else
@@ -240,6 +240,11 @@ public class FlareEntity extends ThrowableProjectile
     public void setColor(int color)
     {
         this.entityData.set(COLOR, color);
+    }
+
+    public void setRandomColor()
+    {
+        this.entityData.set(COLOR, random.nextInt(0xFFFFFF));
     }
 
     @Override

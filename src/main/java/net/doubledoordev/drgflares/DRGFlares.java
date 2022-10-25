@@ -4,9 +4,7 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import net.minecraft.Util;
-import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +14,7 @@ import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -90,7 +88,7 @@ public class DRGFlares
     @SubscribeEvent
     public static void chatMessage(ServerChatEvent event)
     {
-        String message = event.getMessage().toLowerCase(Locale.ROOT);
+        String message = event.getMessage().getString().toLowerCase(Locale.ROOT);
 
         if (message.contains("setflarecolor"))
         {
@@ -106,16 +104,16 @@ public class DRGFlares
                     };
 
             event.getPlayer().getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> flareCap.setFlareColor(color));
-            event.getPlayer().sendMessage(new TextComponent(messageToSend), ChatType.GAME_INFO, Util.NIL_UUID);
+            event.getPlayer().displayClientMessage(Component.literal(messageToSend), true);
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
-    public static void playerJoin(EntityJoinWorldEvent event)
+    public static void playerJoin(EntityJoinLevelEvent event)
     {
         // need this to sync flare data on join or the client is stupid and displays max.
-        if (!event.getWorld().isClientSide && event.getEntity() instanceof Player player)
+        if (!event.getLevel().isClientSide && event.getEntity() instanceof Player player)
         {
             player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
                 int storedFlares = flareCap.getStoredFlares();
@@ -140,7 +138,7 @@ public class DRGFlares
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
-        // Deferreds good.
+        // Deferred good.
         BlockRegistry.BLOCK_DEFERRED.register(modEventBus);
         BlockRegistry.TILE_ENTITY_DEFERRED.register(modEventBus);
         EntityRegistry.ENTITY_DEFERRED.register(modEventBus);

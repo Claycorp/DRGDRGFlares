@@ -5,16 +5,18 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.network.PacketDistributor;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.doubledoordev.drgflares.capability.FlareDataCap;
 import net.doubledoordev.drgflares.client.FlareModel;
 import net.doubledoordev.drgflares.client.FlareRenderer;
@@ -39,15 +41,39 @@ public class ClientEventHandler
         @SubscribeEvent
         public static void clientRendering(EntityRenderersEvent.RegisterRenderers event)
         {
-            ClientRegistry.registerKeyBinding(THROW_FLARE);
-
             event.registerEntityRenderer(EntityRegistry.FLARE_ENTITY.get(), FlareRenderer::new);
+        }
+
+        @SubscribeEvent
+        public static void keyBinding(RegisterKeyMappingsEvent event)
+        {
+            event.register(THROW_FLARE);
         }
 
         @SubscribeEvent
         public static void clientLayers(EntityRenderersEvent.RegisterLayerDefinitions event)
         {
             event.registerLayerDefinition(FlareModel.LAYER_LOCATION, FlareModel::createBodyLayer);
+        }
+
+        @SubscribeEvent
+        public static void registerOverlay(RegisterGuiOverlaysEvent event)
+        {
+            event.registerAboveAll("flare_count", Mod::flareCount);
+        }
+
+        public static void flareCount(ForgeGui gui, PoseStack stack, float partialTicks, int width, int height)
+        {
+            Player player = Minecraft.getInstance().player;
+
+            if (DRGFlaresConfig.GENERALCONFIG.displayFlareCount.get() && player != null)
+            {
+                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareData ->
+                        gui.getFont().drawShadow(stack,
+                                "Flares: " + flareData.getStoredFlares() + "/" + DRGFlaresConfig.GENERALCONFIG.flareQuantity.get(),
+                                DRGFlaresConfig.GENERALCONFIG.UIPosX.get().floatValue(),
+                                DRGFlaresConfig.GENERALCONFIG.UIPosY.get().floatValue(), 0xffffff));
+            }
         }
     }
 
@@ -56,22 +82,11 @@ public class ClientEventHandler
     {
         // Catch our key press, fire off a packet to the server for handling.
         @SubscribeEvent
-        public static void onKeyEvent(InputEvent.KeyInputEvent event)
+        public static void onKeyEvent(InputEvent.Key event)
         {
             if (THROW_FLARE.isDown())
             {
                 PacketHandler.send(PacketDistributor.SERVER.noArg(), new ThrowFlarePacket());
-            }
-        }
-
-        @SubscribeEvent
-        public static void drawTextEvent(RenderGameOverlayEvent.Text event)
-        {
-            Player player = Minecraft.getInstance().player;
-
-            if (DRGFlaresConfig.GENERALCONFIG.displayFlareCount.get() && player != null)
-            {
-                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> event.getLeft().add("Flares: " + flareCap.getStoredFlares() + "/" + DRGFlaresConfig.GENERALCONFIG.flareQuantity.get()));
             }
         }
     }

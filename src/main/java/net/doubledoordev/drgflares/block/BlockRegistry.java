@@ -18,10 +18,10 @@ import static net.doubledoordev.drgflares.DRGFlares.MODID;
 public class BlockRegistry
 {
     public static final DeferredRegister<Block> BLOCK_DEFERRED = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, MODID);
+    public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
 
     // Blocks
-    public static final RegistryObject<Block> FAKE_LIGHT = register("fake_light", () -> new FakeLightBlock(BlockBehaviour.Properties.of(Material.AIR).noDrops().noOcclusion().noCollission()));
+    public static final RegistryObject<Block> FAKE_LIGHT = register("fake_light", () -> new FakeLightBlock(BlockBehaviour.Properties.of(Material.AIR).noLootTable().noOcclusion().noCollission()));
 
     @SuppressWarnings("ConstantConditions")
     private static <T extends BlockEntity> RegistryObject<BlockEntityType<T>> register(String name, BlockEntityType.BlockEntitySupplier<T> factory, Supplier<? extends Block> block)

@@ -32,7 +32,7 @@ public class ThrowFlarePacket
             case -2 -> flareEntity.setColor(DRGFlares.HSBtoRGB((flareData.getFlaresThrown() / 360F * 100) * .1f, 1, 1));
 
             //Random colors.
-            case -4 -> flareEntity.setColor(flareEntity.level.random.nextInt(0xFFFFFF));
+            case -4 -> flareEntity.setRandomColor();
             default -> flareEntity.setColor(flareData.getFlareColor());
         }
         flareEntity.setOwner(player);
@@ -52,26 +52,28 @@ public class ThrowFlarePacket
             //Must be on a server.
             if (!level.isClientSide)
             {
-                //Now we check for the capability to edit it as it's required.
-                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
-                    if (flareCap.getStoredFlares() > 0 && flareCap.getFlareThrowCoolDown() == 0)
-                    {
-                        if (flareCap.getFlareColor() == -1)
-                            flareCap.setFlareColor(DRGFlares.stringToColorInt("#c334eb"));
+                context.enqueueWork(() -> {
+                    //Now we check for the capability to edit it as it's required.
+                    player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> {
+                        if (flareCap.getStoredFlares() > 0 && flareCap.getFlareThrowCoolDown() == 0)
+                        {
+                            if (flareCap.getFlareColor() == -1)
+                                flareCap.setFlareColor(DRGFlares.stringToColorInt("#c334eb"));
 
-                        //If the player is creative throw free flares. If they are spectator & are allowed & they don't need to generate flares, throw em.
-                        if (player.isCreative() || (player.isSpectator() && GENERALCONFIG.spectatorsThrowFlares.get() && !GENERALCONFIG.spectatorsRequiredToGenerateFlares.get()))
-                        {
-                            shootFlare(level, player, flareCap);
+                            //If the player is creative throw free flares. If they are spectator & are allowed & they don't need to generate flares, throw em.
+                            if (player.isCreative() || (player.isSpectator() && GENERALCONFIG.spectatorsThrowFlares.get() && !GENERALCONFIG.spectatorsRequiredToGenerateFlares.get()))
+                            {
+                                shootFlare(level, player, flareCap);
+                            }
+                            else
+                            {
+                                shootFlare(level, player, flareCap);
+                                flareCap.setStoredFlares(flareCap.getStoredFlares() - 1);
+                                flareCap.setFlareThrowCoolDown(GENERALCONFIG.flareThrowCoolDown.get());
+                                PacketHandler.send(PacketDistributor.PLAYER.with(context::getSender), new FlareCountSyncPacket(flareCap.getStoredFlares()));
+                            }
                         }
-                        else
-                        {
-                            shootFlare(level, player, flareCap);
-                            flareCap.setStoredFlares(flareCap.getStoredFlares() - 1);
-                            flareCap.setFlareThrowCoolDown(GENERALCONFIG.flareThrowCoolDown.get());
-                            PacketHandler.send(PacketDistributor.PLAYER.with(context::getSender), new FlareCountSyncPacket(flareCap.getStoredFlares()));
-                        }
-                    }
+                    });
                 });
             }
         }

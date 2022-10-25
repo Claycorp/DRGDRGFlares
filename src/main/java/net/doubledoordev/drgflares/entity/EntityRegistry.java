@@ -12,7 +12,7 @@ import static net.minecraft.world.entity.MobCategory.MISC;
 public class EntityRegistry
 {
     // Entity registry
-    public static final DeferredRegister<EntityType<?>> ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.ENTITIES, MODID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_DEFERRED = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MODID);
     // Flare Entity Type
     public static final RegistryObject<EntityType<FlareEntity>> FLARE_ENTITY = register("flare", EntityType.Builder.<FlareEntity>of(FlareEntity::new, MISC).sized(0.5f, 0.5f).clientTrackingRange(30).updateInterval(1));
 

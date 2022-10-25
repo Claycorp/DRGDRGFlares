@@ -59,9 +59,10 @@ public class FakeLightBlock extends BaseEntityBlock implements SimpleWaterlogged
         return super.updateShape(state, direction, state1, level, pos, pos1);
     }
 
-    @Override
+    @SuppressWarnings("deprecation")
     @Nonnull
     @ParametersAreNonnullByDefault
+    @Override
     public RenderShape getRenderShape(BlockState state)
     {
         // Do this so we can get visible light blocks.
