@@ -8,13 +8,16 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.gui.ForgeIngameGui;
+import net.minecraftforge.client.gui.IIngameOverlay;
+import net.minecraftforge.client.gui.OverlayRegistry;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.network.PacketDistributor;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.doubledoordev.drgflares.capability.FlareDataCap;
 import net.doubledoordev.drgflares.client.FlareModel;
 import net.doubledoordev.drgflares.client.FlareRenderer;
@@ -49,6 +52,22 @@ public class ClientEventHandler
         {
             event.registerLayerDefinition(FlareModel.LAYER_LOCATION, FlareModel::createBodyLayer);
         }
+
+        public static final IIngameOverlay FlareCount = OverlayRegistry.registerOverlayTop("drgflaresflarecount", Mod::flareCount);
+
+        public static void flareCount(ForgeIngameGui gui, PoseStack stack, float partialTicks, int width, int height)
+        {
+            Player player = Minecraft.getInstance().player;
+
+            if (DRGFlaresConfig.GENERALCONFIG.displayFlareCount.get() && player != null)
+            {
+                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareData ->
+                        gui.getFont().drawShadow(stack,
+                                "Flares: " + flareData.getStoredFlares() + "/" + DRGFlaresConfig.GENERALCONFIG.flareQuantity.get(),
+                                DRGFlaresConfig.GENERALCONFIG.UIPosX.get().floatValue(),
+                                DRGFlaresConfig.GENERALCONFIG.UIPosY.get().floatValue(), 0xffffff));
+            }
+        }
     }
 
     @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.FORGE)
@@ -61,17 +80,6 @@ public class ClientEventHandler
             if (THROW_FLARE.isDown())
             {
                 PacketHandler.send(PacketDistributor.SERVER.noArg(), new ThrowFlarePacket());
-            }
-        }
-
-        @SubscribeEvent
-        public static void drawTextEvent(RenderGameOverlayEvent.Text event)
-        {
-            Player player = Minecraft.getInstance().player;
-
-            if (DRGFlaresConfig.GENERALCONFIG.displayFlareCount.get() && player != null)
-            {
-                player.getCapability(FlareDataCap.FLARE_DATA).ifPresent(flareCap -> event.getLeft().add("Flares: " + flareCap.getStoredFlares() + "/" + DRGFlaresConfig.GENERALCONFIG.flareQuantity.get()));
             }
         }
     }

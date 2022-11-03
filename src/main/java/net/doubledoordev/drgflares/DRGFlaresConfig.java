@@ -31,6 +31,8 @@ public class DRGFlaresConfig
         public ForgeConfigSpec.DoubleValue flareGravity;
         public ForgeConfigSpec.DoubleValue flareThrowForce;
         public ForgeConfigSpec.DoubleValue flareRotationStrength;
+        public ForgeConfigSpec.DoubleValue UIPosX;
+        public ForgeConfigSpec.DoubleValue UIPosY;
 
         public ForgeConfigSpec.BooleanValue hitEntityGlows;
         public ForgeConfigSpec.BooleanValue lightBlockDebug;
@@ -61,11 +63,6 @@ public class DRGFlaresConfig
                     .translation("drgflares.config.flareReplenishQuantity")
                     .defineInRange("flareReplenishQuantity", 1, 1, Integer.MAX_VALUE);
 
-            displayFlareCount = builder
-                    .comment("Display the count of flares currently stored on the player in the HUD.")
-                    .translation("drgflares.config.displayFlareCount")
-                    .define("displayFlareCount", true);
-
             makeNoiseWhenThrown = builder
                     .comment("If flares make a noise when thrown.")
                     .translation("drgflares.config.makeNoiseWhenThrown")
@@ -92,6 +89,24 @@ public class DRGFlaresConfig
                     .defineInRange("flareThrowForce", 1.5, 0, Float.MAX_VALUE);
 
             builder.pop();
+            builder.comment("Flare UI settings")
+                    .push("UI");
+
+            displayFlareCount = builder
+                    .comment("Display the count of flares currently stored on the player in the HUD.")
+                    .translation("drgflares.config.displayFlareCount")
+                    .define("displayFlareCount", true);
+
+            UIPosX = builder
+                    .comment("X (Left/Right) position of the flare counter, 0,0 is top left.")
+                    .translation("drgflares.config.UIPosX")
+                    .defineInRange("UIPosX", 5, 0, Float.MAX_VALUE);
+
+            UIPosY = builder
+                    .comment("Y (Up/Down) position of the flare counter, 0,0 is top left.")
+                    .translation("drgflares.config.UIPosY")
+                    .defineInRange("UIPosY", 5, 0, Float.MAX_VALUE);
+
             builder.comment("Flare lighting settings")
                     .push("Light");
 
